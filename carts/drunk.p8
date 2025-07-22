@@ -382,12 +382,15 @@ function handle_drink_selection()
   -- Drink selection with effects buttons
   local left_pressed = btnp(0)  -- Left
   local right_pressed = btnp(1) -- Right
-  local x_pressed = btnp(4)     -- X - buy drink
-  
+  local up_pressed = btnp(2)    -- Up
+  local bottom_pressed = btnp(3) -- Down
+
   -- Inverted controls
   if inverted_controls_timer > 0 then
     left_pressed = btnp(1)   -- Right becomes Left
     right_pressed = btnp(0)  -- Left becomes Right
+    up_pressed = btnp(3)     -- Down becomes Up
+    bottom_pressed = btnp(2) -- Up becomes Down
   end
   
   -- Chaotic movement - random selection
@@ -404,11 +407,17 @@ function handle_drink_selection()
     else
       selected_drink_index = min(#drinks, selected_drink_index + 1)
     end
+
   -- Normal controls
   elseif left_pressed then
     selected_drink_index = max(1, selected_drink_index - 1)
   elseif right_pressed then
     selected_drink_index = min(#drinks, selected_drink_index + 1)
+  elseif up_pressed then
+    selected_drink_index = max(1, selected_drink_index - 4)
+  elseif bottom_pressed then
+    selected_drink_index = min(#drinks, selected_drink_index + 4)
+
   end
   
 --   -- Slowmotion - delay between presses
@@ -584,7 +593,7 @@ function draw_menu()
   print("avoid: <20 or >100", 18, 70, 8)
   print("", 0, 80, 6)
   print("left/right select drink", 15, 85, 6)
-  print("x buy/interact", 23, 95, 6)
+  print("x interact", 23, 95, 6)
   print("", 0, 105, 6)
   print("press x to start", 20, 115, 12)
 end
