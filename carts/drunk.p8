@@ -15,7 +15,7 @@ salary = 267                 -- Размер зарплаты в рублях з
 salary_frequency = 30        -- Как часто приходит зарплата в секундах
 base_liver_health = 2000     -- Начальное здоровье печени в единицах
 liver_damage_factor = 0.001833    -- Коэффициент роста урона печени по времени (+0.1833% урона каждую секунду)
-base_sobering_rate = 3       -- Единицы опьянения, теряемые каждые SOBERING_FREQUENCY секунд
+base_sobering_rate = 15       -- Единицы опьянения, теряемые каждые SOBERING_FREQUENCY секунд
 sobering_acceleration = 0.011667   -- Ускорение отрезвления по времени (+0.01167 единицы скорости каждую секунду)
 sobering_frequency = 1       -- Как часто происходит отрезвление в секундах
 tolerance_factor = 0.0015    -- Снижение эффективности алкоголя по времени (-0.15% эффективности каждую секунду)
@@ -25,13 +25,14 @@ drinking_frequency = 5       -- Как часто персонаж выпива�
 money = 267
 liver_health = base_liver_health
 intoxication = 50
+selected_drink_index = 1  -- Выбранный напиток в магазине
 
 -- Параметры опьянения
 intoxication_min_threshold = 0   -- Ниже - проигрыш
-intoxication_optimal_min = 40     -- Оптимальный диапазон
-intoxication_optimal_max = 70     -- Оптимальный диапазон
-intoxication_drunk_threshold = 80 -- "В хлам" - штрафы
-intoxication_critical = 100       -- Критический уровень - проигрыш
+intoxication_optimal_min = 150     -- Оптимальный диапазон
+intoxication_optimal_max = 400     -- Оптимальный диапазон
+intoxication_drunk_threshold = 450 -- "В хлам" - штрафы
+intoxication_critical = 500       -- Критический уровень - проигрыш
 
 -- Бонусы при получке
 payday_bonuses = {
@@ -112,7 +113,6 @@ drinks = {
 function _init()
     -- Initialize game state
     current_state = game_state.main_menu
-    selected_drink = 1 -- Для выбора напитков
 end
 
 function _update60()
@@ -154,6 +154,10 @@ function update_time()
       drink_alcohol()
     end
     
+    -- Применяем падение опьянения
+    if total_seconds % sobering_frequency == 0 then
+      update_sobering()
+    end
     -- Зарплата каждые SALARY_FREQUENCY секунд
     if total_seconds % salary_frequency == 0 then
       money += salary
@@ -251,8 +255,6 @@ function update_effects()
     return true
   end
   
-  -- Применяем падение опьянения
-  update_sobering()
   
   return false
 end
@@ -260,13 +262,9 @@ end
 -- Function to drink alcohol (referenced in update_time)
 function drink_alcohol()
   if #drinks > 0 then
-    -- Выбираем случайный напиток (упрощенная логика)
-    local drink_index = flr(rnd(#drinks)) + 1
-    local drink = drinks[drink_index]
-    
     -- Проверяем, хватает ли денег
-    if money >= drink.price then
-      consume_drink(drink)
+    if money >= drinks[selected_drink_index].price then
+      consume_drink(drinks[selected_drink_index])
     end
   end
 end
@@ -324,10 +322,8 @@ end
 
 -- Функция падения опьянения
 function update_sobering()
-  if total_seconds % sobering_frequency == 0 then  -- каждую секунду
-    local current_sobering_rate = base_sobering_rate + (sobering_acceleration * total_seconds)
+    local current_sobering_rate = base_sobering_rate + (sobering_acceleration * total_seconds) / sobering_frequency
     intoxication = max(0, intoxication - current_sobering_rate)
-  end
 end
 
 -- Проверка условий окончания игры
@@ -377,6 +373,12 @@ function update_game()
     return
   end
   
+  -- Обрабатываем выбор 
+  handle_drink_selection()
+end
+
+-- Функция обработки выбора напитка
+function handle_drink_selection()
   -- Выбор напитка кнопками с учетом эффектов
   local left_pressed = btnp(0)  -- Left
   local right_pressed = btnp(1) -- Right
@@ -391,36 +393,29 @@ function update_game()
   -- Хаотичное движение - случайный выбор
   if chaotic_movement_timer > 0 and (left_pressed or right_pressed) then
     if rnd(1) < 0.5 then
-      selected_drink = max(1, selected_drink - 1)
+      selected_drink_index = max(1, selected_drink_index - 1)
     else
-      selected_drink = min(#drinks, selected_drink + 1)
+      selected_drink_index = min(#drinks, selected_drink_index + 1)
     end
   -- Дрожь выбора - иногда случайно сдвигается
   elseif shaking_timer > 0 and rnd(1) < 0.3 then
     if rnd(1) < 0.5 then
-      selected_drink = max(1, selected_drink - 1)
+      selected_drink_index = max(1, selected_drink_index - 1)
     else
-      selected_drink = min(#drinks, selected_drink + 1)
+      selected_drink_index = min(#drinks, selected_drink_index + 1)
     end
   -- Нормальное управление
   elseif left_pressed then
-    selected_drink = max(1, selected_drink - 1)
+    selected_drink_index = max(1, selected_drink_index - 1)
   elseif right_pressed then
-    selected_drink = min(#drinks, selected_drink + 1)
+    selected_drink_index = min(#drinks, selected_drink_index + 1)
   end
   
-  -- Замедление - задержка между нажатиями
-  local can_buy = true
-  if slowmotion_timer > 0 then
-    can_buy = (frames % 30 == 0)  -- Только каждые полсекунды
-  end
-  
-  if x_pressed and can_buy then
-    local drink = drinks[selected_drink]
-    if money >= drink.price then
-      consume_drink(drink)
-    end
-  end
+--   -- Замедление - задержка между нажатиями
+--   local can_buy = true
+--   if slowmotion_timer > 0 then
+--     can_buy = (frames % 30 == 0)  -- Только каждые полсекунды
+--   end
 end
 
 -- Мини-игра для мочегонного эффекта
@@ -505,7 +500,7 @@ function update_game_over()
     intoxication = 50  -- Стартуем в оптимальном диапазоне
     total_seconds = 0
     frames = 0
-    selected_drink = 1
+    selected_drink_index = 1
     
     -- Сброс бонусов
     liver_protection_bonus = 0
@@ -539,7 +534,7 @@ function update_win()
     intoxication = 50
     total_seconds = 0
     frames = 0
-    selected_drink = 1
+    selected_drink_index = 1
     
     -- Сброс бонусов
     liver_protection_bonus = 0
@@ -620,7 +615,7 @@ function draw_game()
   
   -- Магазин напитков
   print("shop (left/right select, x buy):", 5, 85, 7)
-  local drink = drinks[selected_drink]
+  local drink = drinks[selected_drink_index]
   local color = money >= drink.price and 11 or 8
   print(drink.name.." - "..drink.price.."r", 5, 95, color)
   print("drunk+"..drink.intoxication.." dmg+"..drink.liver_damage, 5, 105, 6)
