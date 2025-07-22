@@ -9,42 +9,42 @@ game_state = {
   win = 4
 }
 
--- Игровые константы
-game_duration = 360          -- Общая продолжительность игры в секундах
-salary = 267                 -- Размер зарплаты в рублях за один раз
-salary_frequency = 30        -- Как часто приходит зарплата в секундах
-base_liver_health = 2000     -- Начальное здоровье печени в единицах
-liver_damage_factor = 0.001833    -- Коэффициент роста урона печени по времени (+0.1833% урона каждую секунду)
-base_sobering_rate = 15       -- Единицы опьянения, теряемые каждые SOBERING_FREQUENCY секунд
-sobering_acceleration = 0.011667   -- Ускорение отрезвления по времени (+0.01167 единицы скорости каждую секунду)
-sobering_frequency = 1       -- Как часто происходит отрезвление в секундах
-tolerance_factor = 0.0015    -- Снижение эффективности алкоголя по времени (-0.15% эффективности каждую секунду)
-drinking_frequency = 5       -- Как часто персонаж выпивает стопку в секундах
+-- Game constants
+game_duration = 360          -- Total game duration in seconds
+salary = 267                 -- Salary amount in rubles per payment
+salary_frequency = 30        -- How often salary comes in seconds
+base_liver_health = 2000     -- Initial liver health in units
+liver_damage_factor = 0.001833    -- Liver damage growth factor per second (+0.1833% damage each second)
+base_sobering_rate = 15       -- Intoxication units lost every SOBERING_FREQUENCY seconds
+sobering_acceleration = 0.011667   -- Sobering acceleration over time (+0.01167 units speed each second)
+sobering_frequency = 1       -- How often sobering occurs in seconds
+tolerance_factor = 0.0015    -- Alcohol effectiveness decrease over time (-0.15% effectiveness each second)
+drinking_frequency = 5       -- How often character drinks a shot in seconds
 
--- Базовые ресурсы
+-- Basic resources
 money = 267
 liver_health = base_liver_health
 intoxication = 50
-selected_drink_index = 1  -- Выбранный напиток в магазине
+selected_drink_index = 1  -- Selected drink in shop
 
--- Параметры опьянения
-intoxication_min_threshold = 0   -- Ниже - проигрыш
-intoxication_optimal_min = 150     -- Оптимальный диапазон
-intoxication_optimal_max = 400     -- Оптимальный диапазон
-intoxication_drunk_threshold = 450 -- "В хлам" - штрафы
-intoxication_critical = 500       -- Критический уровень - проигрыш
+-- Intoxication parameters
+intoxication_min_threshold = 0   -- Below this - game over
+intoxication_optimal_min = 150     -- Optimal range
+intoxication_optimal_max = 400     -- Optimal range
+intoxication_drunk_threshold = 450 -- "Wasted" - penalties
+intoxication_critical = 500       -- Critical level - game over
 
--- Бонусы при получке
+-- Payday bonuses
 payday_bonuses = {
   {name = "zakuska", effect = "heal_liver", value = 173, chance = 0.2},
   {name = "opohmel", effect = "add_intoxication", value = 37, chance = 0.15},
   {name = "halturka", effect = "add_money", value = 123, chance = 0.25},
-  {name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800, chance = 0.15}, -- 30 сек
+  {name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800, chance = 0.15}, -- 30 sec
   {name = "ascorbic", effect = "increase_max_liver", value = 189, chance = 0.1},
-  {name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800, chance = 0.15} -- 30 сек
+  {name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800, chance = 0.15} -- 30 sec
 }
 
--- Временные эффекты бонусов
+-- Temporary bonus effects
 liver_protection_bonus = 0
 liver_protection_timer = 0
 drinking_efficiency_bonus = 0
@@ -149,16 +149,16 @@ function update_time()
     frames = 0
     total_seconds += 1
     
-    -- Автоматическое употребление алкоголя каждые DRINKING_FREQUENCY секунд
+    -- Automatic alcohol consumption every DRINKING_FREQUENCY seconds
     if total_seconds % drinking_frequency == 0 then
       drink_alcohol()
     end
     
-    -- Применяем падение опьянения
+    -- Apply sobering
     if total_seconds % sobering_frequency == 0 then
       update_sobering()
     end
-    -- Зарплата каждые SALARY_FREQUENCY секунд
+    -- Salary every SALARY_FREQUENCY seconds
     if total_seconds % salary_frequency == 0 then
       money += salary
       trigger_payday()
@@ -172,44 +172,44 @@ hallucination_timer = 0
 liver_protection_timer = 0
 blackout_timer = 0
 minigame_active = false
-shaking_timer = 0        -- Для эффекта "дрожь выбора"
-slowmotion_timer = 0     -- Для эффекта замедления
-inverted_controls_timer = 0  -- Для инверсии управления
-chaotic_movement_timer = 0   -- Для хаотичного движения рамки
+shaking_timer = 0        -- For "shaking selection" effect
+slowmotion_timer = 0     -- For slowmotion effect
+inverted_controls_timer = 0  -- For inverted controls
+chaotic_movement_timer = 0   -- For chaotic frame movement
 
 -- Drink effect functions
 function sanitizer_effect()
-  -- Дрожь выбора (рамка случайно сдвигается)
+  -- Shaking selection (frame randomly shifts)
   shaking_timer = 300  -- 5 seconds at 60fps
 end
 
 function cologne_effect()
-  -- Замедление 4 сек (медленное движение рамки)
+  -- Slowmotion 4 sec (slow frame movement)
   slowmotion_timer = 240  -- 4 seconds at 60fps
 end
 
 function antifreeze_effect()
-  -- Слепота 5 сек (не видно напитки)
+  -- Blindness 5 sec (can't see drinks)
   blind_timer = 300  -- 5 seconds at 60fps
 end
 
 function cognac_effect()
-  -- Инверсия управления 6 сек (↑=↓, ←=→)
+  -- Inverted controls 6 sec (↑=↓, ←=→)
   inverted_controls_timer = 360  -- 6 seconds at 60fps
 end
 
 function beer_effect()
-  -- Мочегонный эффект (пауза на мини-игру)
+  -- Diuretic effect (pause for mini-game)
   minigame_active = true
 end
 
 function vodka_effect()
-  -- Блэкаут 2 сек (управление не работает)
+  -- Blackout 2 sec (controls don't work)
   blackout_timer = 120  -- 2 seconds at 60fps
 end
 
 function yorsh_effect()
-  -- Хаотичная рамка (движется случайно)
+  -- Chaotic frame (moves randomly)
   chaotic_movement_timer = 480  -- 8 seconds at 60fps
 end
 
@@ -262,57 +262,57 @@ end
 -- Function to drink alcohol (referenced in update_time)
 function drink_alcohol()
   if #drinks > 0 then
-    -- Проверяем, хватает ли денег
+    -- Check if we have enough money
     if money >= drinks[selected_drink_index].price then
       consume_drink(drinks[selected_drink_index])
     end
   end
 end
 
--- Функция употребления напитка с применением формул прогрессии
+-- Function for consuming drink with progression formulas applied
 function consume_drink(drink)
   money -= drink.price
   
-  -- Применяем формулы прогрессии
+  -- Apply progression formulas
   local effective_intoxication = calculate_effective_intoxication(drink.intoxication)
   local effective_liver_damage = calculate_effective_liver_damage(drink.liver_damage)
   
-  -- Применяем эффекты
+  -- Apply effects
   intoxication += effective_intoxication
   liver_health -= effective_liver_damage
   
-  -- Проверяем побочный эффект
+  -- Check for side effect
 --   if rnd(1) < drink.effect_chance then
 --     drink.effect_func()
 --   end
   
-  -- Проверяем условия окончания игры
+  -- Check game end conditions
   check_game_conditions()
 end
 
--- Формула толерантности к алкоголю
+-- Alcohol tolerance formula
 function calculate_effective_intoxication(base_intoxication)
-  local effectiveness = 1 - (tolerance_factor * total_seconds)  -- -0.15% эффективности каждую секунду
+  local effectiveness = 1 - (tolerance_factor * total_seconds)  -- -0.15% effectiveness each second
   local final_intoxication = base_intoxication * effectiveness
   
-  -- Применяем бонус эффективности пьянства если активен
+  -- Apply drinking efficiency bonus if active
   if drinking_efficiency_timer > 0 then
     final_intoxication = final_intoxication * (1 + drinking_efficiency_bonus)
   end
   
-  -- Применяем штраф за высокое опьянение
+  -- Apply penalty for high intoxication
   local drunk_penalty = get_drunk_penalty()
   final_intoxication = final_intoxication * drunk_penalty
   
-  return max(final_intoxication, base_intoxication * 0.1) -- минимум 10% эффективности
+  return max(final_intoxication, base_intoxication * 0.1) -- minimum 10% effectiveness
 end
 
--- Формула увеличения урона печени
+-- Liver damage increase formula
 function calculate_effective_liver_damage(base_damage)
-  local damage_multiplier = 1 + (liver_damage_factor * total_seconds)  -- +0.1833% урона каждую секунду
+  local damage_multiplier = 1 + (liver_damage_factor * total_seconds)  -- +0.1833% damage each second
   local final_damage = base_damage * damage_multiplier
   
-  -- Применяем защиту печени если активна
+  -- Apply liver protection if active
   if liver_protection_timer > 0 then
     final_damage = final_damage * (1 - liver_protection_bonus)
   end
@@ -320,34 +320,34 @@ function calculate_effective_liver_damage(base_damage)
   return final_damage
 end
 
--- Функция падения опьянения
+-- Sobering function
 function update_sobering()
     local current_sobering_rate = base_sobering_rate + (sobering_acceleration * total_seconds) / sobering_frequency
     intoxication = max(0, intoxication - current_sobering_rate)
 end
 
--- Проверка условий окончания игры
+-- Check game end conditions
 function check_game_conditions()
   if liver_health <= 0 then
     -- current_state = game_state.game_over
   elseif intoxication <= intoxication_min_threshold then
-    -- Слишком трезвый - проигрыш
+    -- Too sober - game over
     -- current_state = game_state.game_over
   elseif intoxication >= intoxication_critical then
-    -- Критическое опьянение - проигрыш  
+    -- Critical intoxication - game over  
     -- current_state = game_state.game_over
   elseif total_seconds >= game_duration then
-    -- Прошло 360 секунд - победа
+    -- 360 seconds passed - victory
     current_state = game_state.win
   end
 end
 
--- Проверка штрафов за высокое опьянение
+-- Check penalties for high intoxication
 function get_drunk_penalty()
   if intoxication >= intoxication_drunk_threshold then
-    return 0.5  -- 50% штраф к эффективности при опьянении "в хлам"
+    return 0.5  -- 50% penalty to effectiveness when "wasted"
   end
-  return 1.0    -- Нет штрафа
+  return 1.0    -- No penalty
 end
 
 -- Function to trigger payday (referenced in update_time)  
@@ -367,85 +367,85 @@ function update_game()
   -- Main game logic
   -- Handle drink selection, consumption, etc.
   
-  -- Проверяем активную мини-игру
+  -- Check active mini-game
   if minigame_active then
     update_minigame()
     return
   end
   
-  -- Обрабатываем выбор 
+  -- Handle drink selection
   handle_drink_selection()
 end
 
--- Функция обработки выбора напитка
+-- Drink selection handling function
 function handle_drink_selection()
-  -- Выбор напитка кнопками с учетом эффектов
+  -- Drink selection with effects buttons
   local left_pressed = btnp(0)  -- Left
   local right_pressed = btnp(1) -- Right
-  local x_pressed = btnp(4)     -- X - купить напиток
+  local x_pressed = btnp(4)     -- X - buy drink
   
-  -- Инверсия управления
+  -- Inverted controls
   if inverted_controls_timer > 0 then
-    left_pressed = btnp(1)   -- Right становится Left
-    right_pressed = btnp(0)  -- Left становится Right
+    left_pressed = btnp(1)   -- Right becomes Left
+    right_pressed = btnp(0)  -- Left becomes Right
   end
   
-  -- Хаотичное движение - случайный выбор
+  -- Chaotic movement - random selection
   if chaotic_movement_timer > 0 and (left_pressed or right_pressed) then
     if rnd(1) < 0.5 then
       selected_drink_index = max(1, selected_drink_index - 1)
     else
       selected_drink_index = min(#drinks, selected_drink_index + 1)
     end
-  -- Дрожь выбора - иногда случайно сдвигается
+  -- Shaking selection - sometimes randomly shifts
   elseif shaking_timer > 0 and rnd(1) < 0.3 then
     if rnd(1) < 0.5 then
       selected_drink_index = max(1, selected_drink_index - 1)
     else
       selected_drink_index = min(#drinks, selected_drink_index + 1)
     end
-  -- Нормальное управление
+  -- Normal controls
   elseif left_pressed then
     selected_drink_index = max(1, selected_drink_index - 1)
   elseif right_pressed then
     selected_drink_index = min(#drinks, selected_drink_index + 1)
   end
   
---   -- Замедление - задержка между нажатиями
+--   -- Slowmotion - delay between presses
 --   local can_buy = true
 --   if slowmotion_timer > 0 then
---     can_buy = (frames % 30 == 0)  -- Только каждые полсекунды
+--     can_buy = (frames % 30 == 0)  -- Only every half second
 --   end
 end
 
--- Мини-игра для мочегонного эффекта
+-- Mini-game for diuretic effect
 minigame_timer = 0
 minigame_target = 0
 minigame_progress = 0
 
 function update_minigame()
   if minigame_timer == 0 then
-    -- Инициализация мини-игры
-    minigame_timer = 300 -- 5 секунд
-    minigame_target = 50 + rnd(50) -- случайная цель
+    -- Mini-game initialization
+    minigame_timer = 300 -- 5 seconds
+    minigame_target = 50 + rnd(50) -- random target
     minigame_progress = 0
   end
   
   minigame_timer -= 1
   
-  -- Быстрые нажатия X увеличивают прогресс
+  -- Fast X presses increase progress
   if btnp(4) then
     minigame_progress += 5
   end
   
-  -- Проверяем завершение мини-игры
+  -- Check mini-game completion
   if minigame_progress >= minigame_target then
-    -- Успех - получаем бонус к деньгам
+    -- Success - get money bonus
     money += 50
     minigame_active = false
     minigame_timer = 0
   elseif minigame_timer <= 0 then
-    -- Провал - теряем здоровье печени
+    -- Failure - lose liver health
     liver_health -= 50
     minigame_active = false
     minigame_timer = 0
@@ -453,25 +453,25 @@ function update_minigame()
 end
 
 function update_payday()
-  -- Handle payday logic - зарплата уже начислена в update_time()
+  -- Handle payday logic - salary already credited in update_time()
   
-  -- Применяем случайный бонус при получке
+  -- Apply random bonus at payday
   apply_payday_bonus()
   
   current_state = game_state.playing
 end
 
--- Функция применения бонусов при получке
+-- Function for applying payday bonuses
 function apply_payday_bonus()
   for bonus in all(payday_bonuses) do
     if rnd(1) < bonus.chance then
       apply_bonus_effect(bonus)
-      break -- только один бонус за раз
+      break -- only one bonus at a time
     end
   end
 end
 
--- Применение эффекта бонуса
+-- Apply bonus effect
 function apply_bonus_effect(bonus)
   if bonus.effect == "heal_liver" then
     liver_health = min(1000 + max_liver_bonus, liver_health + bonus.value)
@@ -484,7 +484,7 @@ function apply_bonus_effect(bonus)
     liver_protection_timer = bonus.duration
   elseif bonus.effect == "increase_max_liver" then
     max_liver_bonus += bonus.value
-    liver_health += bonus.value -- также восстанавливаем здоровье
+    liver_health += bonus.value -- also restore health
   elseif bonus.effect == "drinking_efficiency" then
     drinking_efficiency_bonus = bonus.value
     drinking_efficiency_timer = bonus.duration
@@ -497,19 +497,19 @@ function update_game_over()
     -- Reset game state
     money = 267
     liver_health = base_liver_health
-    intoxication = 50  -- Стартуем в оптимальном диапазоне
+    intoxication = 50  -- Start in optimal range
     total_seconds = 0
     frames = 0
     selected_drink_index = 1
     
-    -- Сброс бонусов
+    -- Reset bonuses
     liver_protection_bonus = 0
     liver_protection_timer = 0
     drinking_efficiency_bonus = 0
     drinking_efficiency_timer = 0
     max_liver_bonus = 0
     
-    -- Сброс эффектов
+    -- Reset effects
     blind_timer = 0
     shaking_timer = 0
     slowmotion_timer = 0
@@ -536,14 +536,14 @@ function update_win()
     frames = 0
     selected_drink_index = 1
     
-    -- Сброс бонусов
+    -- Reset bonuses
     liver_protection_bonus = 0
     liver_protection_timer = 0
     drinking_efficiency_bonus = 0
     drinking_efficiency_timer = 0
     max_liver_bonus = 0
     
-    -- Сброс эффектов
+    -- Reset effects
     blind_timer = 0
     shaking_timer = 0
     slowmotion_timer = 0
@@ -590,37 +590,37 @@ function draw_menu()
 end
 
 function draw_game()
-  -- Проверяем активную мини-игру
+  -- Check active mini-game
   if minigame_active then
     draw_minigame()
     return
   end
   
-  -- Основная информация
+  -- Main information
   print("money: "..money.."r", 5, 5, 7)
   print("liver: "..flr(liver_health).."/"..flr(base_liver_health + max_liver_bonus), 5, 15, 8)
   
-  -- Опьянение с цветовой индикацией
+  -- Intoxication with color indication
   local intox_color = get_intoxication_color()
   print("drunk: "..flr(intoxication), 5, 25, intox_color)
   print(get_intoxication_status(), 50, 25, intox_color)
   
   print("time: "..total_seconds.."/"..game_duration.." sec", 5, 35, 6)
   
-  -- Прогрессия эффективности
+  -- Efficiency progression
   local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
   local drunk_penalty = get_drunk_penalty()
   local total_effectiveness = flr(effectiveness * drunk_penalty)
   print("efficiency: "..total_effectiveness.."%", 5, 45, 5)
   
-  -- Магазин напитков
+  -- Drink shop
   print("shop (left/right select, x buy):", 5, 85, 7)
   local drink = drinks[selected_drink_index]
   local color = money >= drink.price and 11 or 8
   print(drink.name.." - "..drink.price.."r", 5, 95, color)
   print("drunk+"..drink.intoxication.." dmg+"..drink.liver_damage, 5, 105, 6)
   
-  -- Активные эффекты
+  -- Active effects
   local y_offset = 55
   if liver_protection_timer > 0 then
     print("liver protect: "..flr(liver_protection_timer/60).."s", 5, y_offset, 11)
@@ -632,52 +632,52 @@ function draw_game()
     y_offset += 10
   end
   
-  -- Эффекты состояний
+  -- Status effects
   if blind_timer > 0 then
-    -- Эффект слепоты - не видно напитки (скрываем магазин)
+    -- Blindness effect - can't see drinks (hide shop)
     rectfill(5, 85, 122, 115, 0)
     print("blind - cant see shop", 10, 100, 8)
   end
   
   if shaking_timer > 0 then
-    -- Дрожь выбора - случайное смещение
+    -- Shaking selection - random offset
     print("shaking selection", 10, 64, 8)
   end
   
   if slowmotion_timer > 0 then
-    -- Замедление
+    -- Slowdown
     print("slow motion", 35, 64, 11)
   end
   
   if inverted_controls_timer > 0 then
-    -- Инверсия управления
+    -- Inverted controls
     print("inverted controls", 20, 64, 14)
   end
   
   if chaotic_movement_timer > 0 then
-    -- Хаотичное движение
+    -- Chaotic movement
     print("chaotic movement", 20, 64, 13)
   end
   
   if blackout_timer > 0 then
-    -- Полный черный экран при блэкауте
+    -- Complete black screen during blackout
     cls(0)
     print("blackout", 35, 64, 8)
   end
 end
 
--- Функции для отображения состояния опьянения
+-- Functions for displaying intoxication state
 function get_intoxication_color()
   if intoxication <= intoxication_min_threshold then
-    return 8  -- Красный - опасно трезвый
+    return 8  -- Red - dangerously sober
   elseif intoxication >= intoxication_critical then
-    return 8  -- Красный - критическое опьянение
+    return 8  -- Red - critical intoxication
   elseif intoxication >= intoxication_drunk_threshold then
-    return 9  -- Оранжевый - "в хлам"
+    return 9  -- Orange - "wasted"
   elseif intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
-    return 11 -- Зеленый - оптимальный уровень
+    return 11 -- Green - optimal level
   else
-    return 6  -- Серый - не оптимальный, но безопасный
+    return 6  -- Gray - not optimal, but safe
   end
 end
 
@@ -700,12 +700,12 @@ function draw_minigame()
   print("bathroom emergency!", 20, 30, 7)
   print("press x rapidly!", 25, 45, 8)
   
-  -- Прогресс бар
+  -- Progress bar
   local progress_width = (minigame_progress / minigame_target) * 100
   rect(10, 60, 110, 70, 7)
   rectfill(11, 61, 10 + progress_width, 69, 11)
   
-  -- Таймер
+  -- Timer
   print("time: "..flr(minigame_timer/60), 45, 80, 6)
   print("progress: "..flr(minigame_progress).."/"..flr(minigame_target), 25, 90, 6)
 end
@@ -721,7 +721,7 @@ function draw_game_over()
   cls(8)
   print("game over", 30, 50, 2)
   
-  -- Определяем причину проигрыша
+  -- Determine cause of loss
   if liver_health <= 0 then
     print("liver failure", 25, 65, 7)
   elseif intoxication <= intoxication_min_threshold then
@@ -741,7 +741,7 @@ function draw_win()
   print("press x to restart", 20, 85, 12)
 end
 
--- Вспомогательная функция для форматирования времени
+-- Helper function for time formatting
 function pad_number(num)
   if num < 10 then
     return "0"..num
