@@ -628,17 +628,24 @@ function draw_game()
         draw_minigame()
         return
     end
-
+    local first_row_text_y = 2
+    local first_row_sprite_y = 0
     -- Main information
-    print("money: " .. money .. "r", 5, 5, 7)
-    print("liver: " .. flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 5, 15, 8)
+    local money_id = 52
+    spr(money_id, 5, first_row_sprite_y)
+    print(money, 15, first_row_text_y, 7)
+
+    local time_id = 54
+    spr(time_id, 32, first_row_sprite_y)
+    print(total_seconds .. "/" .. game_duration, 42, first_row_text_y, 6)
+
+    print("liver: " .. flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 5, first_row_text_y + 12, 8)
 
     -- Intoxication with color indication
     local intox_color = get_intoxication_color()
     print("drunk: " .. flr(intoxication), 5, 25, intox_color)
     print(get_intoxication_status(), 50, 25, intox_color)
 
-    print("time: " .. total_seconds .. "/" .. game_duration .. " sec", 5, 35, 6)
 
     -- Efficiency progression
     local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
