@@ -445,23 +445,96 @@ minigame_timer = 0
 minigame_target = 0
 minigame_progress = 0
 
+-- Stream minigame variables
+stream_x = 64  -- Stream horizontal position
+stream_y = 120 -- Stream vertical position (bottom of screen)
+stream_length = 30 -- Current stream length
+stream_max_length = 80 -- Maximum stream length
+toilet_x = 64  -- Toilet horizontal position
+toilet_y = 64  -- Toilet vertical position  
+toilet_size = 2 -- Toilet sprite size: fixed 16x16 pixels (2x2 tiles)
+toilet_hit_time = 0 -- Time spent hitting toilet
+toilet_target_time = 600 -- 10 seconds at 60fps
+toilet_vel_x = 0 -- Toilet velocity X
+toilet_vel_y = 0 -- Toilet velocity Y
+toilet_speed = 0.8 -- Base toilet movement speed
+minigame_game_length = 5 -- Mini-game length in seconds
+
 function update_minigame()
     if minigame_timer == 0 then
         -- Mini-game initialization
-        minigame_timer = 300 -- 5 seconds
-        minigame_target = 50 + rnd(50) -- random target
-        minigame_progress = 0
+        minigame_timer = toilet_target_time -- 5 seconds
+        toilet_hit_time = 0
+        -- Reset toilet position and velocity
+        toilet_x = 32 + rnd(64) -- Random x between 32-96
+        local min_y = stream_y - stream_max_length -- Top boundary based on MAX stream length
+        local max_y = 120 - 16  -- Bottom boundary (16px for toilet sprite)
+        toilet_y = min_y + rnd(max_y - min_y) -- Random y within max stream reach
+        toilet_size = 2 -- Fixed size: 16x16 pixels (2x2 tiles)
+        toilet_vel_x = (rnd(2) - 1) * toilet_speed -- Random velocity based on toilet_speed
+        toilet_vel_y = (rnd(2) - 1) * toilet_speed
     end
 
     minigame_timer -= 1
 
-    -- Fast X presses increase progress
-    if btnp(4) then
-        minigame_progress += 5
+    -- Move toilet with velocity
+    toilet_x += toilet_vel_x
+    toilet_y += toilet_vel_y
+    
+    -- Bounce off screen edges and randomize direction
+    if toilet_x <= 8 or toilet_x >= 120 - toilet_size * 8 then
+        toilet_vel_x = -toilet_vel_x + (rnd(1) - 0.5) -- Bounce and add randomness
+        toilet_x = mid(8, toilet_x, 120 - toilet_size * 8)
+    end
+    
+    -- Y boundary: top limit is MAX stream reach, bottom is screen edge
+    local min_y = stream_y - stream_max_length -- Top boundary based on MAX stream length
+    local max_y = 120 - toilet_size * 8        -- Bottom boundary (screen edge)
+    
+    if toilet_y <= min_y or toilet_y >= max_y then
+        toilet_vel_y = -toilet_vel_y + (rnd(1) - 0.5) -- Bounce and add randomness
+        toilet_y = mid(min_y, toilet_y, max_y)
+    end
+    
+    -- Randomly change direction occasionally
+    if rnd(1) < 0.01 then -- 1% chance per frame
+        toilet_vel_x += (rnd(2) - 1) * (toilet_speed * 0.25) -- Direction change based on speed
+        toilet_vel_y += (rnd(2) - 1) * (toilet_speed * 0.25)
+        -- Limit velocity based on toilet_speed
+        local max_speed = toilet_speed * 1.5
+        toilet_vel_x = mid(-max_speed, toilet_vel_x, max_speed)
+        toilet_vel_y = mid(-max_speed, toilet_vel_y, max_speed)
+    end
+    
+
+    -- Control stream with arrow keys
+    if btn(0) then -- Left
+        stream_x -= 2
+    end
+    if btn(1) then -- Right  
+        stream_x += 2
+    end
+    if btn(2) then -- Up
+        stream_length = min(stream_max_length, stream_length + 2)
+    else
+        stream_length = max(10, stream_length - 1)
+    end
+    
+    -- Keep stream on screen
+    stream_x = mid(4, stream_x, 124)
+    
+    -- Check if stream hits toilet
+    local stream_top_y = stream_y - stream_length
+    local toilet_hit = false
+    
+    if stream_x >= toilet_x and stream_x <= toilet_x + toilet_size * 8 and
+       stream_top_y <= toilet_y + toilet_size * 8 and stream_y >= toilet_y then
+        toilet_hit = true
+        toilet_hit_time += 1
     end
 
     -- Check mini-game completion
-    if minigame_progress >= minigame_target then
+    if toilet_hit_time >= toilet_target_time then
         -- Success - get money bonus
         money += 50
         minigame_active = false
@@ -543,6 +616,19 @@ function update_game_over()
         minigame_timer = 0
         minigame_target = 0
         minigame_progress = 0
+        
+        -- Reset stream minigame variables
+        stream_x = 64
+        stream_y = 120
+        stream_length = 30
+        stream_max_length = 80
+        toilet_x = 64
+        toilet_y = 64
+        toilet_size = 2
+        toilet_hit_time = 0
+        toilet_vel_x = 0
+        toilet_vel_y = 0
+        toilet_speed = 0.8
 
         current_state = game_state.main_menu
     end
@@ -578,6 +664,19 @@ function update_win()
         minigame_timer = 0
         minigame_target = 0
         minigame_progress = 0
+        
+        -- Reset stream minigame variables
+        stream_x = 64
+        stream_y = 120
+        stream_length = 30
+        stream_max_length = 80
+        toilet_x = 64
+        toilet_y = 64
+        toilet_size = 2
+        toilet_hit_time = 0
+        toilet_vel_x = 0
+        toilet_vel_y = 0
+        toilet_speed = 0.8
 
         current_state = game_state.main_menu
     end
@@ -623,12 +722,13 @@ function draw_menu()
 end
 
 function draw_game()
+    minigame_active = true
     -- Check active mini-game
     if minigame_active then
         draw_minigame()
         return
     end
-    local first_row_text_y = 2
+    local first_row_text_y = 1
     local first_row_sprite_y = 0
     -- Main information
     local money_id = 52
@@ -748,6 +848,41 @@ function draw_game()
     end
 end
 
+function draw_minigame()
+    cls(1) -- Blue background
+    print("bathroom emergency!", 20, 5, 7)
+    print("hit toilet for 5 seconds!", 15, 15, 8)
+    
+    -- Draw toilet sprite (moving and resizing)
+    local toilet_sprite_id = 26 -- Assuming sprite 26 is your toilet
+    spr(toilet_sprite_id, toilet_x, toilet_y, toilet_size, toilet_size)
+    
+    -- Draw stream
+    if stream_length > 0 then
+        local stream_top_y = stream_y - stream_length
+        -- Draw yellow stream line
+        for i = 0, stream_length do
+            pset(stream_x, stream_y - i, 10) -- Yellow color
+            -- Add some width to the stream
+            if i % 2 == 0 then
+                pset(stream_x - 1, stream_y - i, 10)
+                pset(stream_x + 1, stream_y - i, 10)
+            end
+        end
+    end
+    
+    -- Draw UI
+    print("time: "..flr(minigame_timer/60).."s", 5, 110, 7)
+    print("hit time: "..flr(toilet_hit_time/60).."/"..minigame_game_length.."s", 5, 120, 11)
+
+    
+    -- Visual feedback when hitting toilet
+    if stream_x >= toilet_x and stream_x <= toilet_x + toilet_size * 8 and
+       (stream_y - stream_length) <= toilet_y + toilet_size * 8 and stream_y >= toilet_y then
+        print("hit!", toilet_x, toilet_y - 8, 11)
+    end
+end
+
 -- Functions for displaying intoxication state
 function get_intoxication_color()
     if intoxication <= intoxication_min_threshold then
@@ -777,20 +912,6 @@ function get_intoxication_status()
     end
 end
 
-function draw_minigame()
-    cls(1)
-    print("bathroom emergency!", 20, 30, 7)
-    print("press x rapidly!", 25, 45, 8)
-
-    -- Progress bar
-    local progress_width = (minigame_progress / minigame_target) * 100
-    rect(10, 60, 110, 70, 7)
-    rectfill(11, 61, 10 + progress_width, 69, 11)
-
-    -- Timer
-    print("time: " .. flr(minigame_timer / 60), 45, 80, 6)
-    print("progress: " .. flr(minigame_progress) .. "/" .. flr(minigame_target), 25, 90, 6)
-end
 
 function draw_payday()
     cls(3)
@@ -858,20 +979,20 @@ __gfx__
 00a1aaaaaaaa1a0000aaa1aaaa1aaa0000e8ee00033333306cccccc604a444a000897200007ccd0009a9a9900000000000000000000000000000000000000000
 0aaaa1aaaa1aaaa00aaa11a8a11aaaa000eeee000333333066666666004444000088220000dddd00009990000000000000000000000000000000000000000000
 0aaaa1a8aa1aaaa00aaa66a2866aaaa0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00aa66a28a66aa0000aaaaaaaaaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00aaaaaaaaaaaa0000ac1aa16aaaaa00000025555000000000002555500000000000289850000000000000000000000000000000000000000000000000000000
-0ccaaa1aa1aaa00000ccc1166aaaa0000022ee55552222220022ee555522222200a298a985828282000000000000000000000000000000000000000000000000
-0cc0a66116aa00000ccc0666aabb000002ee455eeeeeeeee02ee495eeeee333e09994958e8e83338000000000000000000000000000000000000000000000000
-0cc0bb6666bb00000ccabbbbbbbb000002e445444444444002e49a944494434008a89a9444944340000000000000000000000000000000000000000000000000
-0ccabbbbbbbba0000000bb0bb0bb000002e445444444440002e4494949a944000888494949a94800000000000000000000000000000000000000000000000000
-0000bb0bb0bb000000000bbbbbbb00002ee44544444440002ee4459a949440009888459a94944000000000000000000000000000000000000000000000000000
-00000bbbbbbb000000000bbbbbbb00002e555544444400002e55554944440000a9a8aa4948480000000000000000000000000000000000000000000000000000
-000bbbbbbbbbb000000bbbbbbbbbb0002544454440000000259995aaa0000000988e8aaaa0000000000000000000000000000000000000000000000000000000
-000baaaaaaabb000000baaaaaaabb0000544a555000000000599a555000000000598aa5500000000000000000000000000000000000000000000000000000000
-0bbbbbbbbbbbb0000bbbbbbbbbbbb000054aa00550000000059aa00550000000089aa00a50000000000000000000000000000000000000000000000000000000
-0011aaaaaaaa110000011aaaa11aa00005aaa0005500000005aaa0005500000005aaa000aa000000000000000000000000000000000000000000000000000000
-00a11aaaa11aaa0000166aaaa661aa000aa00000050000000aa00000050000000aa0000005000000000000000000000000000000000000000000000000000000
-00166aaaa661aa0000aaaaaaaaaaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00aa66a28a66aa0000aaaaaaaaaaaa00000000000000000000000000000000000000000000000000077777777777777000000000000000000000000000000000
+00aaaaaaaaaaaa0000ac1aa16aaaaa000000255550000000000025555000000000002898500000000722777ff777777000000000000000000000000000000000
+0ccaaa1aa1aaa00000ccc1166aaaa0000022ee55552222220022ee555522222200a298a98582828207777772f777777000000000000000000000000000000000
+0cc0a66116aa00000ccc0666aabb000002ee455eeeeeeeee02ee495eeeee333e09994958e8e83338077777777777777000000000000000000000000000000000
+0cc0bb6666bb00000ccabbbbbbbb000002e445444444444002e49a944494434008a89a94449443400eeeeeeeeeeeeee000000000000000000000000000000000
+0ccabbbbbbbba0000000bb0bb0bb000002e445444444440002e4494949a944000888494949a94800007766666666770000000000000000000000000000000000
+0000bb0bb0bb000000000bbbbbbb00002ee44544444440002ee4459a949440009888459a94944000007667777776670000000000000000000000000000000000
+00000bbbbbbb000000000bbbbbbb00002e555544444400002e55554944440000a9a8aa494848000000766ff11ff6670000000000000000000000000000000000
+000bbbbbbbbbb000000bbbbbbbbbb0002544454440000000259995aaa0000000988e8aaaa00000000076fff11ff6670000000000000000000000000000000000
+000baaaaaaabb000000baaaaaaabb0000544a555000000000599a555000000000598aa5500000000007667fffff6670000000000000000000000000000000000
+0bbbbbbbbbbbb0000bbbbbbbbbbbb000054aa00550000000059aa00550000000089aa00a50000000007766777766770000000000000000000000000000000000
+0011aaaaaaaa110000011aaaa11aa00005aaa0005500000005aaa0005500000005aaa000aa000000000766666666700000000000000000000000000000000000
+00a11aaaa11aaa0000166aaaa661aa000aa00000050000000aa00000050000000aa0000005000000000077777777000000000000000000000000000000000000
+00166aaaa661aa0000aaaaaaaaaaaa00000000000000000000000000000000000000000000000000000000777700000000000000000000000000000000000000
 0aaa1a8aa1aaaaa000aa1a8aa1aaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0aa1a1881a1aaaa00aa1a1881a1aaa00099999900000000000222200000000000000000000000000000000000000000000000000000000000000000000000000
 00a666888666aa000aa666888666aa009aaccca90cccccc002666620000000000000000000000000000000000000000000000000000000000000000000000000
