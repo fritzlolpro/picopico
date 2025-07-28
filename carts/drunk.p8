@@ -585,17 +585,26 @@ function _draw()
 end
 
 function draw_menu()
-  print("drunk simulator", 20, 20, 7)
-  print("survive 360 seconds", 18, 35, 6)
-  print("", 0, 45, 6)
-  print("keep drunk level:", 15, 50, 5)
-  print("optimal: 40-70", 25, 60, 11)
-  print("avoid: <20 or >100", 18, 70, 8)
-  print("", 0, 80, 6)
-  print("left/right select drink", 15, 85, 6)
-  print("x interact", 23, 95, 6)
-  print("", 0, 105, 6)
-  print("press x to start", 20, 115, 12)
+  print("drunk simulator", 10, 10, 7)
+  print("survive 360 seconds", 10, 20, 6)
+  print("keep optimal drunk level", 10, 30, 5)
+  print("avoid being too sober", 10, 40, 8)
+  print("avoid being too drunk", 10, 50, 8)
+  print("dont kill your liver", 10, 60, 8)
+
+  -- draw liver
+  local liver_x_pixel = 32
+  local liver_y_pixel = 8
+
+  -- Convert pixel coordinates to sprite ID (PICO-8 uses 8x8 tiles)
+  local sprite_id = (liver_x_pixel / 8) + (liver_y_pixel / 8) * 16
+
+  -- Draw the 16x16 drink sprite (2x2 tiles)
+  spr(sprite_id, 10, 65, 2, 2)
+
+  print("left/right select drink", 10, 85, 6)
+  print("x interact", 10, 95, 6)
+  print("press x to start", 10, 115, 12)
 end
 
 function draw_game()
@@ -623,7 +632,7 @@ function draw_game()
   print("efficiency: "..total_effectiveness.."%", 5, 45, 5)
   
   -- Drink shop with sprites (moved up 20px)
-  print("shop (left/right select, x buy):", 5, 65, 7)
+  print("shop (left/right select):", 5, 65, 7)
   
   -- Draw drink sprites in 4x3 grid
   for i = 1, #drinks do
