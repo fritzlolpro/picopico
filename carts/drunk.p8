@@ -439,11 +439,11 @@ function handle_drink_selection()
         selected_drink_index = min(#drinks, selected_drink_index + 4)
     end
 
-    --   -- Slowmotion - delay between presses
-    --   local can_buy = true
-    --   if slowmotion_timer > 0 then
-    --     can_buy = (frames % 30 == 0)  -- Only every half second
-    --   end
+    -- Slowmotion - delay between presses
+    local can_buy = true
+    if slowmotion_timer > 0 then
+        can_buy = (frames % 30 == 0)  -- Only every half second
+    end
 end
 
 -- Mini-game for diuretic effect
@@ -769,6 +769,10 @@ function draw_game()
 
     print(flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 68, second_row_text_y, 8)
 
+    if liver_protection_timer > 0 then
+        print("protection: " .. flr(liver_protection_timer / 60) .. "s", 5, second_row_text_y, 11)
+    end
+
     local sober_char_idle_id = 64
     local sober_char_drinking_id = 66
 
@@ -805,25 +809,37 @@ function draw_game()
     if flr(character_animation_timer / 60) % 2 == 1 then
         current_char_sprite = char_sprite_drinking_id
     end
+
     spr(current_char_sprite, 78, third_row_sprite_y, 2, 2)
 
-
-
-    -- Intoxication with color indication
     local intox_color = get_intoxication_color()
-    print("drunk: " .. flr(intoxication), 5, 25, intox_color)
-    print(get_intoxication_status(), 50, 25, intox_color)
+    print("drunk: " .. flr(intoxication), 68, third_row_sprite_y + 17, intox_color)
+    print(get_intoxication_status(intoxication), 68, third_row_sprite_y + 25, intox_color)
+
+    local effect_info_y = third_row_sprite_y + 25
+    -- Status effects
+    if shaking_timer > 0 then
+        -- Shaking selection - random offset
+        print("shaking selection", 10, effect_info_y, 8)
+    end
+
+    if slowmotion_timer > 0 then
+        -- Slowdown
+        print("slow motion", 10, effect_info_y, 11)
+    end
+
+    if inverted_controls_timer > 0 then
+        -- Inverted controls
+        print("inverted controls", 10, effect_info_y, 14)
+    end
+
+    if chaotic_movement_timer > 0 then
+        -- Chaotic movement
+        print("chaotic movement", 10, effect_info_y, 13)
+    end
 
 
-    -- Efficiency progression
-    local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
-    local drunk_penalty = get_drunk_penalty()
-    local total_effectiveness = flr(effectiveness * drunk_penalty)
-    print("efficiency: " .. total_effectiveness .. "%", 5, 45, 5)
-
-    -- Drink shop with sprites (moved up 20px)
-    print("shop (left/right select):", 5, 65, 7)
-
+    local shop_position_y = third_row_sprite_y + 32
     -- Draw drink sprites in 4x3 grid
     for i = 1, #drinks do
         local col, row
@@ -838,7 +854,7 @@ function draw_game()
         end
 
         local display_x = 10 + col * 20 -- 20px spacing between sprites
-        local display_y = 75 + row * 20 -- 75px for first row (moved up 20px), 95px for second row
+        local display_y = shop_position_y + row * 20 -- 75px for first row (moved up 20px), 95px for second row
 
         -- Calculate sprite ID from coordinates you provided
         -- Sprites are at y=64, x positions: 0, 16, 32, 48, 64, 80, 96
@@ -864,49 +880,33 @@ function draw_game()
         end
     end
 
+    local drink_info_y = shop_position_y + 42
     -- Show selected drink info below sprites
     local drink = drinks[selected_drink_index]
     local color = money >= drink.price and 11 or 8
-    print(drink.name .. " - " .. drink.price .. "r", 5, 115, color)
-    print("drunk+" .. drink.intoxication .. " dmg+" .. drink.liver_damage, 5, 125, 6)
+    print(drink.name .. " - " .. drink.price .. "r", 5, drink_info_y, color)
+    print("drunk+" .. drink.intoxication .. " liver dmg+" .. drink.liver_damage, 5, drink_info_y + 10, 6)
+
+    -- Efficiency progression
+    local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
+    local drunk_penalty = get_drunk_penalty()
+    local total_effectiveness = flr(effectiveness * drunk_penalty)
+    print("efficiency: " .. total_effectiveness .. "%", 5, drink_info_y + 20, 5)
 
     -- Active effects
     local y_offset = 55
-    if liver_protection_timer > 0 then
-        print("liver protect: " .. flr(liver_protection_timer / 60) .. "s", 5, y_offset, 11)
-        y_offset += 10
-    end
+ 
 
     if drinking_efficiency_timer > 0 then
         print("drink boost: " .. flr(drinking_efficiency_timer / 60) .. "s", 5, y_offset, 12)
         y_offset += 10
     end
 
-    -- Status effects
+    
     if blind_timer > 0 then
         -- Blindness effect - can't see drinks (hide shop)
-        rectfill(5, 65, 127, 127, 0) -- Cover sprite grid and text (moved up 20px)
+        rectfill(5, shop_position_y - 1, 127, 127, 0) -- Cover sprite grid and text (moved up 20px)
         print("blind - cant see shop", 10, 80, 8)
-    end
-
-    if shaking_timer > 0 then
-        -- Shaking selection - random offset
-        print("shaking selection", 10, 64, 8)
-    end
-
-    if slowmotion_timer > 0 then
-        -- Slowdown
-        print("slow motion", 35, 64, 11)
-    end
-
-    if inverted_controls_timer > 0 then
-        -- Inverted controls
-        print("inverted controls", 20, 64, 14)
-    end
-
-    if chaotic_movement_timer > 0 then
-        -- Chaotic movement
-        print("chaotic movement", 20, 64, 13)
     end
 
     if blackout_timer > 0 then
