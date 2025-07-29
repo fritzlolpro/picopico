@@ -24,7 +24,7 @@ drinking_frequency = 5 -- How often character drinks a shot in seconds
 -- Basic resources
 money = 267
 liver_health = base_liver_health
-intoxication = 50
+intoxication = 150
 selected_drink_index = 1 -- Selected drink in shop
 
 -- Intoxication parameters
@@ -50,6 +50,48 @@ liver_protection_timer = 0
 drinking_efficiency_bonus = 0
 drinking_efficiency_timer = 0
 max_liver_bonus = 0
+
+-- Drink effect functions
+function sanitizer_effect()
+    -- Shaking selection (frame randomly shifts)
+    shaking_timer = 300
+    -- 5 seconds at 60fps
+end
+
+function cologne_effect()
+    -- Slowmotion 4 sec (slow frame movement)
+    slowmotion_timer = 240
+    -- 4 seconds at 60fps
+end
+
+function antifreeze_effect()
+    -- Blindness 5 sec (can't see drinks)
+    blind_timer = 300
+    -- 5 seconds at 60fps
+end
+
+function cognac_effect()
+    -- Inverted controls 6 sec (ヌ●➡️=ヌ●⧗, ヌ●…=ヌ●★)
+    inverted_controls_timer = 360
+    -- 6 seconds at 60fps
+end
+
+function beer_effect()
+    -- Diuretic effect (pause for mini-game)
+    minigame_active = true
+end
+
+function vodka_effect()
+    -- Blackout 2 sec (controls don't work)
+    blackout_timer = 120
+    -- 2 seconds at 60fps
+end
+
+function yorsh_effect()
+    -- Chaotic frame (moves randomly)
+    chaotic_movement_timer = 480
+    -- 8 seconds at 60fps
+end
 
 drinks = {
     {
@@ -177,48 +219,6 @@ slowmotion_timer = 0 -- For slowmotion effect
 inverted_controls_timer = 0 -- For inverted controls
 chaotic_movement_timer = 0 -- For chaotic frame movement
 
--- Drink effect functions
-function sanitizer_effect()
-    -- Shaking selection (frame randomly shifts)
-    shaking_timer = 300
-    -- 5 seconds at 60fps
-end
-
-function cologne_effect()
-    -- Slowmotion 4 sec (slow frame movement)
-    slowmotion_timer = 240
-    -- 4 seconds at 60fps
-end
-
-function antifreeze_effect()
-    -- Blindness 5 sec (can't see drinks)
-    blind_timer = 300
-    -- 5 seconds at 60fps
-end
-
-function cognac_effect()
-    -- Inverted controls 6 sec (ヌ●➡️=ヌ●⧗, ヌ●…=ヌ●★)
-    inverted_controls_timer = 360
-    -- 6 seconds at 60fps
-end
-
-function beer_effect()
-    -- Diuretic effect (pause for mini-game)
-    minigame_active = true
-end
-
-function vodka_effect()
-    -- Blackout 2 sec (controls don't work)
-    blackout_timer = 120
-    -- 2 seconds at 60fps
-end
-
-function yorsh_effect()
-    -- Chaotic frame (moves randomly)
-    chaotic_movement_timer = 480
-    -- 8 seconds at 60fps
-end
-
 -- Update effect timers
 function update_effects()
     if blind_timer > 0 then
@@ -287,9 +287,9 @@ function consume_drink(drink)
     liver_health -= effective_liver_damage
 
     -- Check for side effect
-    --   if rnd(1) < drink.effect_chance then
-    --     drink.effect_func()
-    --   end
+    if rnd(1) < drink.effect_chance then
+        drink.effect_func()
+    end
 
     -- Check game end conditions
     check_game_conditions()
@@ -337,13 +337,13 @@ end
 -- Check game end conditions
 function check_game_conditions()
     if liver_health <= 0 then
-        -- current_state = game_state.game_over
+        current_state = game_state.game_over
     elseif intoxication <= intoxication_min_threshold then
         -- Too sober - game over
-        -- current_state = game_state.game_over
+        current_state = game_state.game_over
     elseif intoxication >= intoxication_critical then
         -- Critical intoxication - game over
-        -- current_state = game_state.game_over
+        current_state = game_state.game_over
     elseif total_seconds >= game_duration then
         -- 360 seconds passed - victory
         current_state = game_state.win
@@ -534,14 +534,14 @@ function update_minigame()
     end
 
     -- Check mini-game completion
-    if toilet_hit_time >= toilet_target_time then
+    if toilet_hit_time >= minigame_game_length then
         -- Success - get money bonus
-        money += 50
+        money += 200
         minigame_active = false
         minigame_timer = 0
     elseif minigame_timer <= 0 then
         -- Failure - lose liver health
-        liver_health -= 50
+        liver_health -= 500
         minigame_active = false
         minigame_timer = 0
     end
@@ -692,7 +692,8 @@ function _draw()
     elseif current_state == game_state.payday then
         draw_payday()
     elseif current_state == game_state.game_over then
-        draw_game_over()
+        -- draw_game_over()
+        draw_game()
     elseif current_state == game_state.win then
         draw_win()
     end
