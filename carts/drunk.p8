@@ -30,6 +30,9 @@ selected_drink_index = 1 -- Selected drink in shop
 -- Character animation
 character_animation_timer = 0 -- Timer for character animation (changes every second)
 
+-- Slowmotion effect
+slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
+
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
 intoxication_optimal_min = 150 -- Optimal range
@@ -161,8 +164,14 @@ function _init()
 end
 
 function _update60()
-    -- Update character animation timer
-    character_animation_timer += 1
+    -- Update character animation timer (slower during slowmotion)
+    if slowmotion_timer > 0 then
+        if frames % slow_motion_multiplier == 0 then
+            character_animation_timer += 1
+        end
+    else
+        character_animation_timer += 1
+    end
     
     -- Update effects first
     local in_blackout = update_effects()
@@ -193,7 +202,14 @@ total_seconds = 0
 
 function update_time()
     frames += 1
-    if frames >= 60 then
+    
+    -- Calculate effective frame rate (slower during slowmotion)
+    local effective_frame_rate = 60
+    if slowmotion_timer > 0 then
+        effective_frame_rate = 60 * slow_motion_multiplier
+    end
+    
+    if frames >= effective_frame_rate then
         frames = 0
         total_seconds += 1
 
@@ -428,7 +444,7 @@ function handle_drink_selection()
             selected_drink_index = min(#drinks, selected_drink_index + 1)
         end
 
-        -- Normal controls
+    -- Normal controls
     elseif left_pressed then
         selected_drink_index = max(1, selected_drink_index - 1)
     elseif right_pressed then
@@ -437,12 +453,6 @@ function handle_drink_selection()
         selected_drink_index = max(1, selected_drink_index - 4)
     elseif bottom_pressed then
         selected_drink_index = min(#drinks, selected_drink_index + 4)
-    end
-
-    -- Slowmotion - delay between presses
-    local can_buy = true
-    if slowmotion_timer > 0 then
-        can_buy = (frames % 30 == 0)  -- Only every half second
     end
 end
 
