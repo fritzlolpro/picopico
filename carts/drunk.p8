@@ -337,13 +337,13 @@ end
 -- Check game end conditions
 function check_game_conditions()
     if liver_health <= 0 then
-        current_state = game_state.game_over
+        -- current_state = game_state.game_over
     elseif intoxication <= intoxication_min_threshold then
         -- Too sober - game over
-        current_state = game_state.game_over
+        -- current_state = game_state.game_over
     elseif intoxication >= intoxication_critical then
         -- Critical intoxication - game over
-        current_state = game_state.game_over
+        -- current_state = game_state.game_over
     elseif total_seconds >= game_duration then
         -- 360 seconds passed - victory
         current_state = game_state.win
@@ -729,8 +729,13 @@ function draw_game()
         draw_minigame()
         return
     end
+
     local first_row_text_y = 1
     local first_row_sprite_y = 0
+
+    local second_row_text_y = 15
+    local second_row_sprite_y = 14
+
     -- Main information
     local money_id = 52
     spr(money_id, 5, first_row_sprite_y)
@@ -740,7 +745,20 @@ function draw_game()
     spr(time_id, 32, first_row_sprite_y)
     print(total_seconds .. "/" .. game_duration, 42, first_row_text_y, 6)
 
-    print("liver: " .. flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 5, first_row_text_y + 12, 8)
+    local liver_healthy_id = 20
+    local liver_middle_id = 22
+    local liver_ruined_id = 24
+    local liver_sprite_id = liver_healthy_id
+    if liver_health <= base_liver_health * 0.7 then
+        liver_sprite_id = liver_middle_id
+    end
+    if liver_health <= base_liver_health * 0.5 then
+        liver_sprite_id = liver_ruined_id
+    end
+
+    spr(liver_sprite_id, 68, first_row_sprite_y, 2, 2)
+
+    print(flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 68, second_row_text_y, 8)
 
     -- Intoxication with color indication
     local intox_color = get_intoxication_color()
