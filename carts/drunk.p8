@@ -27,6 +27,9 @@ liver_health = base_liver_health
 intoxication = 150
 selected_drink_index = 1 -- Selected drink in shop
 
+-- Character animation
+character_animation_timer = 0 -- Timer for character animation (changes every second)
+
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
 intoxication_optimal_min = 150 -- Optimal range
@@ -158,6 +161,9 @@ function _init()
 end
 
 function _update60()
+    -- Update character animation timer
+    character_animation_timer += 1
+    
     -- Update effects first
     local in_blackout = update_effects()
 
@@ -769,11 +775,11 @@ function draw_game()
     local medium_char_idle_id = 00
     local medium_char_drinking_id = 02
 
-    local drunk_char_idle_id = 20
-    local drunk_char_drinking_id = 22
+    local drunk_char_idle_id = 32
+    local drunk_char_drinking_id = 34
 
-    local wasted_char_idle_id = 60
-    local wasted_char_drunking_id = 62
+    local wasted_char_idle_id = 96
+    local wasted_char_drinking_id = 98
 
     local char_sprite_idle_id = sober_char_idle_id
     local char_sprite_drinking_id = sober_char_drinking_id
@@ -791,11 +797,17 @@ function draw_game()
 
     if blackout_timer > 0 then
         char_sprite_idle_id = wasted_char_idle_id
-        char_sprite_drinking_id = wasted_char_drunking_id
+        char_sprite_drinking_id = wasted_char_drinking_id
     end
 
+    -- Draw character with animation (switches every second)
+    local current_char_sprite = char_sprite_idle_id
+    if flr(character_animation_timer / 60) % 2 == 1 then
+        current_char_sprite = char_sprite_drinking_id
+    end
+    spr(current_char_sprite, 78, third_row_sprite_y, 2, 2)
 
-    
+
 
     -- Intoxication with color indication
     local intox_color = get_intoxication_color()
