@@ -37,7 +37,7 @@ slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
 intoxication_min_threshold = 0 -- Below this - game over
 intoxication_optimal_min = 150 -- Optimal range
 intoxication_optimal_max = 400 -- Optimal range
-intoxication_drunk_threshold = 450 -- "Wasted" - penalties
+intoxication_wasted_threshold = 450 -- "Wasted" - penalties
 intoxication_critical = 500 -- Critical level - game over
 
 -- Payday bonuses
@@ -374,7 +374,7 @@ end
 
 -- Check penalties for high intoxication
 function get_drunk_penalty()
-    if intoxication >= intoxication_drunk_threshold then
+    if intoxication >= intoxication_wasted_threshold then
         return 0.5 -- 50% penalty to effectiveness when "wasted"
     end
     return 1.0
@@ -801,6 +801,10 @@ function draw_game()
     if intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         char_sprite_idle_id = medium_char_idle_id
         char_sprite_drinking_id = medium_char_drinking_id
+    elseif intoxication >= intoxication_wasted_threshold then
+        -- Wasted state - very high intoxication
+        char_sprite_idle_id = wasted_char_idle_id
+        char_sprite_drinking_id = wasted_char_drinking_id
     elseif intoxication > intoxication_optimal_max then
         char_sprite_idle_id = drunk_char_idle_id
         char_sprite_drinking_id = drunk_char_drinking_id
@@ -809,6 +813,7 @@ function draw_game()
         char_sprite_drinking_id = sober_char_drinking_id
     end
 
+    -- Override with blackout sprites if blackout is active
     if blackout_timer > 0 then
         char_sprite_idle_id = wasted_char_idle_id
         char_sprite_drinking_id = wasted_char_drinking_id
@@ -969,7 +974,7 @@ function get_intoxication_color()
         return 8 -- Red - dangerously sober
     elseif intoxication >= intoxication_critical then
         return 8 -- Red - critical intoxication
-    elseif intoxication >= intoxication_drunk_threshold then
+    elseif intoxication >= intoxication_wasted_threshold then
         return 9 -- Orange - "wasted"
     elseif intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         return 11 -- Green - optimal level
@@ -983,7 +988,7 @@ function get_intoxication_status()
         return "too sober!"
     elseif intoxication >= intoxication_critical then
         return "critical!"
-    elseif intoxication >= intoxication_drunk_threshold then
+    elseif intoxication >= intoxication_wasted_threshold then
         return "wasted"
     elseif intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         return "optimal"
