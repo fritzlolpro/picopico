@@ -736,6 +736,9 @@ function draw_game()
     local second_row_text_y = 15
     local second_row_sprite_y = 14
 
+    local third_row_text_y = 25
+    local third_row_sprite_y = 24
+
     -- Main information
     local money_id = 52
     spr(money_id, 5, first_row_sprite_y)
@@ -756,9 +759,43 @@ function draw_game()
         liver_sprite_id = liver_ruined_id
     end
 
-    spr(liver_sprite_id, 68, first_row_sprite_y, 2, 2)
+    spr(liver_sprite_id, 78, first_row_sprite_y, 2, 2)
 
     print(flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 68, second_row_text_y, 8)
+
+    local sober_char_idle_id = 64
+    local sober_char_drinking_id = 66
+
+    local medium_char_idle_id = 00
+    local medium_char_drinking_id = 02
+
+    local drunk_char_idle_id = 20
+    local drunk_char_drinking_id = 22
+
+    local wasted_char_idle_id = 60
+    local wasted_char_drunking_id = 62
+
+    local char_sprite_idle_id = sober_char_idle_id
+    local char_sprite_drinking_id = sober_char_drinking_id
+
+    if intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
+        char_sprite_idle_id = medium_char_idle_id
+        char_sprite_drinking_id = medium_char_drinking_id
+    elseif intoxication > intoxication_optimal_max then
+        char_sprite_idle_id = drunk_char_idle_id
+        char_sprite_drinking_id = drunk_char_drinking_id
+    else
+        char_sprite_idle_id = sober_char_idle_id
+        char_sprite_drinking_id = sober_char_drinking_id
+    end
+
+    if blackout_timer > 0 then
+        char_sprite_idle_id = wasted_char_idle_id
+        char_sprite_drinking_id = wasted_char_drunking_id
+    end
+
+
+    
 
     -- Intoxication with color indication
     local intox_color = get_intoxication_color()
