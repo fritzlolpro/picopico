@@ -134,6 +134,7 @@ drinks = {
         name = "cologne_shipr",
         price = 21,
         intoxication = 145,
+        -- intoxication = 0,
         liver_damage = 13,
         effect_chance = 0.25,
         effect_func = cologne_effect
@@ -225,6 +226,27 @@ function _update60()
                 intoxication = intoxication / 2
             end
         end
+    end
+    
+    -- Update sobriety timer (considering slowmotion)
+    if intoxication < intoxication_optimal_min then
+        if slowmotion_timer > 0 then
+            if frames % slow_motion_multiplier == 0 then
+                sobriety_timer += 1
+            end
+        else
+            sobriety_timer += 1
+        end
+        
+        -- Check if timer expired
+        if sobriety_timer >= sobriety_duration then
+            -- Game over - too sober
+            current_state = game_state.game_over
+            game_over_reason = "too sober! you need to drink more alcohol to maintain optimal state."
+        end
+    else
+        -- Reset timer when not too sober
+        sobriety_timer = 0
     end
     
     -- Update effects first
@@ -487,26 +509,9 @@ end
 
 -- Sobriety protection mechanism
 function update_sobriety_protection()
-    local is_too_sober = intoxication < intoxication_optimal_min
-    
-    if is_too_sober then
-        -- Check if intoxication increased since last check
-        if intoxication > last_intoxication_check then
-            -- Intoxication increased, reset timer
-            sobriety_timer = 0
-        else
-            -- Still too sober, update timer
-            sobriety_timer += 1
-            
-            -- Check if timer expired
-            if sobriety_timer >= sobriety_duration then
-                -- Game over - too sober
-                current_state = game_state.game_over
-                game_over_reason = "too sober! you need to drink more alcohol to maintain optimal state."
-            end
-        end
-    else
-        -- Not too sober, reset timer
+    -- Check if intoxication increased since last check
+    if intoxication > last_intoxication_check then
+        -- Intoxication increased, reset timer
         sobriety_timer = 0
     end
     
@@ -1035,12 +1040,6 @@ function draw_game()
         print("chaotic!", 10, effect_info_y, 13)
     end
 
-    if sobriety_timer > 0 then
-        -- Too sober warning
-        local remaining_time = flr((sobriety_duration - sobriety_timer) / 60)
-        print("too sober! " .. remaining_time .. "s", 10, effect_info_y, 8)
-    end
-
 
     local shop_position_y = third_row_sprite_y + 32
     -- Draw drink sprites in 4x3 grid
@@ -1172,8 +1171,10 @@ function get_intoxication_color()
 end
 
 function get_intoxication_status()
-    if intoxication <= intoxication_min_threshold then
-        return "too sober!"
+    if intoxication < intoxication_optimal_min then
+        -- Always show sobriety timer when below optimal minimum
+        local remaining_time = flr((sobriety_duration - sobriety_timer) / 60)
+        return "too sober " .. remaining_time .. "s"
     elseif intoxication >= intoxication_critical or critical_timer > 0 then
         -- Add critical timer to status
         local timer_seconds = flr(critical_timer / 60)
