@@ -8,7 +8,7 @@ game_state = {
     game_over = 3,
     win = 4
 }
-
+-- ⬇️⬆️➡️⬅️🅾️❎
 -- Game constants
 game_duration = 360 -- Total game duration in seconds
 salary = 267 -- Salary amount in rubles per payment
@@ -631,7 +631,7 @@ toilet_y = 64  -- Toilet vertical position
 toilet_size = 4 -- Toilet sprite size: fixed 32x32 pixels (4x4 tiles)
 
 toilet_hit_time = 0 -- Time spent hitting toilet continuously (in frames)
-toilet_target_time = 300 -- Required continuous hit time: 5 seconds at 60fps  
+toilet_target_time = 200 -- Required continuous hit time: 5 seconds at 60fps  
 toilet_vel_x = 0 -- Toilet velocity X
 toilet_vel_y = 0 -- Toilet velocity Y
 toilet_speed = 0.8 -- Base toilet movement speed
@@ -927,14 +927,14 @@ function draw_menu()
 
     -- Draw the 16x16 drink sprite (2x2 tiles)
     spr(sprite_id, 10, 65, 2, 2)
-
-    print("left/right select drink", 10, 85, 6)
-    print("x interact", 10, 95, 6)
-    print("press x to start", 10, 115, 12)
+    -- ⬇️⬆️➡️⬅️🅾️❎
+    print("⬇️⬆️➡️⬅️ select drink", 10, 85, 6)
+    print("❎ interact", 10, 95, 6)
+    print("press ❎ to start", 10, 115, 12)
 end
 
 function draw_game()
-    minigame_active =true
+    
     -- Check active mini-game
     if minigame_active then
         draw_minigame()
@@ -1259,7 +1259,7 @@ function draw_payday()
     end
     
     -- Instructions
-    print("arrows: select, x: buy", 5, 96, 7)
+    print("⬇️⬆️➡️⬅️ select, ❎ buy", 5, 96, 7)
     
     -- Show selected bonus info
     local selected_bonus = payday_bonuses[selected_bonus_index]
@@ -1275,8 +1275,8 @@ function draw_game_over()
     if game_over_reason != "" then
         print(game_over_reason, 10, 65, 7)
     end
-
-    print("press x to restart", 10, 85, 6)
+    -- ⬇️⬆️➡️⬅️🅾️❎
+    print("press ❎ to restart", 10, 85, 6)
 end
 
 function draw_win()
