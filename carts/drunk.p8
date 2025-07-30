@@ -62,9 +62,9 @@ payday_bonuses = {
     { name = "zakuska", effect = "heal_liver", value = 173, chance = 0.2 },
     { name = "opohmel", effect = "add_intoxication", value = 37, chance = 0.15 },
     { name = "halturka", effect = "add_money", value = 123, chance = 0.25 },
-    { name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800, chance = 0.15 }, -- 30 sec
-    { name = "ascorbic", effect = "increase_max_liver", value = 189, chance = 0.1 },
-    { name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800, chance = 0.15 } -- 30 sec
+    { name = "hugan pills", effect = "liver_protection", value = 0.47, duration = 1800, chance = 0.15 }, -- 30 sec
+    { name = "cheap ascorbic", effect = "increase_max_liver", value = 189, chance = 0.1 },
+    { name = "alcoholic training", effect = "drinking_efficiency", value = 0.31, duration = 1800, chance = 0.15 } -- 30 sec
 }
 
 -- Temporary bonus effects
