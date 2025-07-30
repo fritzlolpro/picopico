@@ -33,6 +33,16 @@ character_animation_timer = 0 -- Timer for character animation (changes every se
 -- Slowmotion effect
 slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
 
+-- Wasted protection mechanism
+wasted_protection_uses = 3 -- How many times player can be saved from auto-drinking when wasted
+wasted_protection_remaining = 3 -- Remaining uses
+was_wasted_last_frame = false -- Track when entering/exiting wasted state
+wasted_overflow_liver_damage = 50 -- Base liver damage when entering wasted after protection is exhausted
+wasted_total_count = 0 -- Total number of times entered wasted state (for display)
+wasted_cycle_count = 0 -- Number of completed cycles (increases damage multiplier)
+wasted_duration = 600 -- How long to stay in wasted state (10 seconds at 60fps)
+wasted_timer = 0 -- Timer for forced wasted state
+
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
 intoxication_optimal_min = 150 -- Optimal range
@@ -173,6 +183,17 @@ function _update60()
         character_animation_timer += 1
     end
     
+    -- Update wasted timer (considering slowmotion)
+    if wasted_timer > 0 then
+        if slowmotion_timer > 0 then
+            if frames % slow_motion_multiplier == 0 then
+                wasted_timer -= 1
+            end
+        else
+            wasted_timer -= 1
+        end
+    end
+    
     -- Update effects first
     local in_blackout = update_effects()
 
@@ -213,8 +234,12 @@ function update_time()
         frames = 0
         total_seconds += 1
 
+        -- Update wasted protection mechanism
+        update_wasted_protection()
+
         -- Automatic alcohol consumption every DRINKING_FREQUENCY seconds
-        if total_seconds % drinking_frequency == 0 and not minigame_active then
+        -- Use wasted protection mechanism
+        if total_seconds % drinking_frequency == 0 and not minigame_active and can_auto_drink() then
             drink_alcohol()
         end
 
@@ -379,6 +404,42 @@ function get_drunk_penalty()
     end
     return 1.0
     -- No penalty
+end
+
+-- Wasted protection mechanism
+function update_wasted_protection()
+    local is_wasted_now = intoxication >= intoxication_wasted_threshold
+    
+    -- Check if just entered wasted state
+    if is_wasted_now and not was_wasted_last_frame then
+        wasted_total_count += 1
+        wasted_timer = wasted_duration -- Start wasted timer
+        
+        if wasted_protection_remaining > 0 then
+            -- Use protection
+            wasted_protection_remaining -= 1
+        else
+            -- Protection exhausted - deal escalating liver damage and reset protection
+            wasted_cycle_count += 1
+            local damage = wasted_overflow_liver_damage * wasted_cycle_count
+            liver_health -= damage
+            
+            wasted_protection_remaining = wasted_protection_uses
+            wasted_total_count = 1 -- Reset count as we start a new cycle
+            
+            -- Visual feedback - could add screen shake or flash here
+        end
+    end
+    
+    was_wasted_last_frame = is_wasted_now
+end
+
+function can_auto_drink()
+    local is_wasted = intoxication >= intoxication_wasted_threshold or wasted_timer > 0
+    if is_wasted then
+        return wasted_protection_remaining > 0
+    end
+    return true
 end
 
 -- Function to trigger payday (referenced in update_time)
@@ -621,6 +682,13 @@ function update_game_over()
         drinking_efficiency_timer = 0
         max_liver_bonus = 0
 
+        -- Reset wasted protection
+        wasted_protection_remaining = wasted_protection_uses
+        was_wasted_last_frame = false
+        wasted_total_count = 0
+        wasted_cycle_count = 0
+        wasted_timer = 0
+
         -- Reset effects
         blind_timer = 0
         shaking_timer = 0
@@ -668,6 +736,13 @@ function update_win()
         drinking_efficiency_bonus = 0
         drinking_efficiency_timer = 0
         max_liver_bonus = 0
+
+        -- Reset wasted protection
+        wasted_protection_remaining = wasted_protection_uses
+        was_wasted_last_frame = false
+        wasted_total_count = 0
+        wasted_cycle_count = 0
+        wasted_timer = 0
 
         -- Reset effects
         blind_timer = 0
@@ -801,8 +876,8 @@ function draw_game()
     if intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         char_sprite_idle_id = medium_char_idle_id
         char_sprite_drinking_id = medium_char_drinking_id
-    elseif intoxication >= intoxication_wasted_threshold then
-        -- Wasted state - very high intoxication
+    elseif intoxication >= intoxication_wasted_threshold or wasted_timer > 0 then
+        -- Wasted state - very high intoxication or timer active
         char_sprite_idle_id = wasted_char_idle_id
         char_sprite_drinking_id = wasted_char_drinking_id
     elseif intoxication > intoxication_optimal_max then
@@ -908,6 +983,12 @@ function draw_game()
     local total_effectiveness = flr(effectiveness * drunk_penalty)
     print("efficiency: " .. total_effectiveness .. "%", 5, drink_info_y + 20, 5)
 
+    -- Show wasted cycle info if any cycles completed
+    if wasted_cycle_count > 0 then
+        local next_damage = wasted_overflow_liver_damage * (wasted_cycle_count + 1)
+        print("next wasted dmg: " .. next_damage, 5, drink_info_y + 30, 8)
+    end
+
     -- Active effects
     local y_offset = 55
  
@@ -974,7 +1055,7 @@ function get_intoxication_color()
         return 8 -- Red - dangerously sober
     elseif intoxication >= intoxication_critical then
         return 8 -- Red - critical intoxication
-    elseif intoxication >= intoxication_wasted_threshold then
+    elseif intoxication >= intoxication_wasted_threshold or wasted_timer > 0 then
         return 9 -- Orange - "wasted"
     elseif intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         return 11 -- Green - optimal level
@@ -988,8 +1069,14 @@ function get_intoxication_status()
         return "too sober!"
     elseif intoxication >= intoxication_critical then
         return "critical!"
-    elseif intoxication >= intoxication_wasted_threshold then
-        return "wasted"
+    elseif intoxication >= intoxication_wasted_threshold or wasted_timer > 0 then
+        -- Add wasted protection info and timer to status
+        local timer_seconds = flr(wasted_timer / 60)
+        if wasted_timer > 0 then
+            return "wasted " .. wasted_total_count .. "/" .. wasted_protection_uses .. " " .. timer_seconds .. "s"
+        else
+            return "wasted " .. wasted_total_count .. "/" .. wasted_protection_uses
+        end
     elseif intoxication >= intoxication_optimal_min and intoxication <= intoxication_optimal_max then
         return "optimal"
     else
