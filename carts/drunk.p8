@@ -64,9 +64,9 @@ payday_bonuses = {
     { name = "zakuska", effect = "heal_liver", value = 200, cost = 100, description = "heal liver" },
     { name = "opohmel", effect = "remove_intoxication", value = 150,  cost = 120, description = "feel better" },
     { name = "halturka", effect = "add_money", value = 123,  cost = 0, description = "side hassle" },
-    { name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800,  cost = 100, description = "protect liver" },
+    { name = "activated carbon", effect = "liver_protection", value = 0.47, duration = 1800,  cost = 100, description = "protect liver" },
     { name = "ascorbic", effect = "increase_max_liver", value = 189, cost = 100, description = "liver got stronger" },
-    { name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800,  cost = 10, description = "become strongman" }
+    { name = "alcoholic training", effect = "drinking_efficiency", value = 0.30, duration = 1800,  cost = 10, description = "become strongman" }
 }
 
 -- Temporary bonus effects
@@ -422,7 +422,7 @@ function calculate_effective_intoxication(base_intoxication)
 
     -- Apply drinking efficiency bonus if active
     if drinking_efficiency_timer > 0 then
-        final_intoxication = final_intoxication * (1 + drinking_efficiency_bonus)
+        final_intoxication = final_intoxication * (1 - drinking_efficiency_bonus)
     end
 
     -- Apply penalty for high intoxication
