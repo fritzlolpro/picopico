@@ -961,25 +961,32 @@ function draw_game()
     print(get_intoxication_status(intoxication), 68, third_row_sprite_y + 25, intox_color)
 
     local effect_info_y = third_row_sprite_y + 25
+
+    
+
+    if drinking_efficiency_timer > 0 then
+        print("boost: " .. flr(drinking_efficiency_timer / 60) .. "s", 0, effect_info_y - 10, 12)
+    end
+
     -- Status effects
     if shaking_timer > 0 then
         -- Shaking selection - random offset
-        print("shaking selection", 10, effect_info_y, 8)
+        print("tremor!", 10, effect_info_y, 8)
     end
 
     if slowmotion_timer > 0 then
         -- Slowdown
-        print("slow motion", 10, effect_info_y, 11)
+        print("slow!", 10, effect_info_y, 11)
     end
 
     if inverted_controls_timer > 0 then
         -- Inverted controls
-        print("inverted controls", 10, effect_info_y, 14)
+        print("confusion!", 10, effect_info_y, 14)
     end
 
     if chaotic_movement_timer > 0 then
         -- Chaotic movement
-        print("chaotic movement", 10, effect_info_y, 13)
+        print("chaotic!", 10, effect_info_y, 13)
     end
 
 
@@ -1046,12 +1053,6 @@ function draw_game()
     -- Active effects
     local y_offset = 55
  
-
-    if drinking_efficiency_timer > 0 then
-        print("drink boost: " .. flr(drinking_efficiency_timer / 60) .. "s", 5, y_offset, 12)
-        y_offset += 10
-    end
-
     
     if blind_timer > 0 then
         -- Blindness effect - can't see drinks (hide shop)
