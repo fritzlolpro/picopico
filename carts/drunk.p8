@@ -12,8 +12,8 @@ game_state = {
 -- Game constants
 game_duration = 360 -- Total game duration in seconds
 salary = 267 -- Salary amount in rubles per payment
--- salary_frequency = 30 -- How often salary comes in seconds
-salary_frequency = 5 -- How often salary comes in seconds
+salary_frequency = 30 -- How often salary comes in seconds
+-- salary_frequency = 5 -- How often salary comes in seconds
 base_liver_health = 2000 -- Initial liver health in units
 liver_damage_factor = 0.001833 -- Liver damage growth factor per second (+0.1833% damage each second)
 base_sobering_rate = 15 -- Intoxication units lost every SOBERING_FREQUENCY seconds
@@ -551,7 +551,7 @@ end
 -- Placeholder update functions
 function update_menu()
     -- Handle menu input
-    if btnp(4) then
+    if btnp(5) then
         -- X button
         current_state = game_state.playing
     end
@@ -735,8 +735,8 @@ function update_payday()
         selected_bonus_index = max(1, selected_bonus_index - 3)
     elseif btnp(3) then -- Down
         selected_bonus_index = min(#payday_bonuses, selected_bonus_index + 3)
-    elseif btnp(4) or btnp(5) then
-        -- X or O button to apply selected bonus
+    elseif btnp(5) then
+        -- X button to apply selected bonus
         local selected_bonus = payday_bonuses[selected_bonus_index]
         if money >= selected_bonus.cost then
             money -= selected_bonus.cost
@@ -772,7 +772,7 @@ end
 
 function update_game_over()
     -- Handle game over screen
-    if btnp(4) then
+    if btnp(5) then
         -- X button to restart
         -- Reset game state
         money = 267
@@ -832,7 +832,7 @@ end
 
 function update_win()
     -- Handle win screen
-    if btnp(4) then
+    if btnp(5) then
         -- X button to restart
         -- Reset game state (same as game over)
         money = 267
@@ -899,7 +899,7 @@ function _draw()
     elseif current_state == game_state.payday then
         draw_payday()
     elseif current_state == game_state.game_over then
-        -- draw_game_over()
+        draw_game_over()
         draw_game()
     elseif current_state == game_state.win then
         draw_win()
@@ -1282,9 +1282,8 @@ end
 function draw_win()
     cls(11)
     print("you win!", 30, 50, 7)
-    print("survived " .. game_duration .. " seconds!", 15, 65, 6)
-    print("final score: " .. money .. "r", 25, 75, 12)
-    print("press x to restart", 20, 85, 12)
+    print("survived another drunkard year", 0, 65, 6)
+    
 end
 
 -- Helper function for time formatting
