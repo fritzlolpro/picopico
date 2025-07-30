@@ -337,6 +337,7 @@ shaking_timer = 0 -- For "shaking selection" effect
 slowmotion_timer = 0 -- For slowmotion effect
 inverted_controls_timer = 0 -- For inverted controls
 chaotic_movement_timer = 0 -- For chaotic frame movement
+chaotic_last_jump_time = 0 -- Track when last jump occurred
 
 -- Update effect timers
 function update_effects()
@@ -358,6 +359,17 @@ function update_effects()
 
     if chaotic_movement_timer > 0 then
         chaotic_movement_timer -= 1
+        
+        -- Auto-jump to adjacent cell every second
+        if total_seconds > chaotic_last_jump_time then
+            chaotic_last_jump_time = total_seconds
+            -- Jump to adjacent cell
+            if rnd(1) < 0.5 then
+                selected_drink_index = max(1, selected_drink_index - 1)
+            else
+                selected_drink_index = min(#drinks, selected_drink_index + 1)
+            end
+        end
     end
 
     if liver_protection_timer > 0 then
@@ -589,15 +601,8 @@ function handle_drink_selection()
         bottom_pressed = btnp(2) -- Up becomes Down
     end
 
-    -- Chaotic movement - random selection
-    if chaotic_movement_timer > 0 and (left_pressed or right_pressed) then
-        if rnd(1) < 0.5 then
-            selected_drink_index = max(1, selected_drink_index - 1)
-        else
-            selected_drink_index = min(#drinks, selected_drink_index + 1)
-        end
-        -- Shaking selection - sometimes randomly shifts
-    elseif shaking_timer > 0 and rnd(1) < 0.3 then
+    -- Shaking selection - sometimes randomly shifts during input
+    if shaking_timer > 0 and rnd(1) < 0.3 then
         if rnd(1) < 0.5 then
             selected_drink_index = max(1, selected_drink_index - 1)
         else
