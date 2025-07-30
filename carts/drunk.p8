@@ -250,7 +250,7 @@ function _update60()
         if sobriety_timer >= sobriety_duration then
             -- Game over - too sober
             current_state = game_state.game_over
-            game_over_reason = "too sober! you need to drink more alcohol to maintain optimal state."
+            game_over_reason = "too sober! you can't handle this!"
         end
     else
         -- Reset timer when not too sober
@@ -456,17 +456,15 @@ end
 -- Check game end conditions
 function check_game_conditions()
     if liver_health <= 0 then
-        -- current_state = game_state.game_over
-    elseif intoxication <= intoxication_min_threshold then
-        -- Too sober - game over
-        -- current_state = game_state.game_over
-    elseif intoxication >= intoxication_critical then
-        -- Critical intoxication - game over
-        -- current_state = game_state.game_over
+        -- Instant game over on liver failure
+        current_state = game_state.game_over
+        game_over_reason = "liver is dead"
     elseif total_seconds >= game_duration then
         -- 360 seconds passed - victory
         current_state = game_state.win
     end
+    -- Note: too sober and critical intoxication are now handled by timer mechanisms
+    -- in update_sobriety_protection() and critical_timer logic
 end
 
 -- Check penalties for high intoxication
