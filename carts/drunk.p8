@@ -888,6 +888,10 @@ function draw_game()
     local money_id = 52
     spr(money_id, 5, first_row_sprite_y)
     print(money, 15, first_row_text_y, 7)
+    
+    -- Salary countdown
+    local time_to_salary = salary_frequency - (total_seconds % salary_frequency)
+    print("salary in: " .. time_to_salary .. "s", 5, first_row_text_y + 8, 7)
 
     local time_id = 54
     spr(time_id, 32, first_row_sprite_y)
