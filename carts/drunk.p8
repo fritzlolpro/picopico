@@ -581,7 +581,7 @@ toilet_target_time = 600 -- 10 seconds at 60fps
 toilet_vel_x = 0 -- Toilet velocity X
 toilet_vel_y = 0 -- Toilet velocity Y
 toilet_speed = 0.8 -- Base toilet movement speed
-minigame_game_length = 5 -- Mini-game length in seconds
+minigame_game_length = 5 * 60 -- Mini-game length in seconds
 
 function update_minigame()
     if minigame_timer == 0 then
