@@ -32,6 +32,8 @@ game_over_reason = "" -- Reason for game over
 
 -- Character animation
 character_animation_timer = 0 -- Timer for character animation (changes every second)
+drinking_animation_trigger = false -- Trigger for drinking animation
+drinking_animation_duration = 60 -- Duration of drinking animation (1 second)
 
 -- Slowmotion effect
 slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
@@ -188,6 +190,8 @@ function _init()
     current_state = game_state.main_menu
 end
 
+
+
 function _update60()
     -- Handle payday state first
     if current_state == game_state.payday then
@@ -202,6 +206,15 @@ function _update60()
         end
     else
         character_animation_timer += 1
+    end
+    
+    -- Update drinking animation trigger
+    if drinking_animation_trigger then
+        drinking_animation_duration -= 1
+        if drinking_animation_duration <= 0 then
+            drinking_animation_trigger = false
+            drinking_animation_duration = 60 -- Reset for next time
+        end
     end
     
     -- Update wasted timer (considering slowmotion)
@@ -313,6 +326,7 @@ function update_time()
         -- Use wasted protection mechanism
         if total_seconds % drinking_frequency == 0 and not minigame_active and can_auto_drink() then
             drink_alcohol()
+            drinking_animation_trigger = true -- Trigger drinking animation
         end
 
         -- Apply sobering
@@ -644,6 +658,7 @@ toilet_speed = 0.8 -- Base toilet movement speed
 minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames
 
 function update_minigame()
+    
     if minigame_timer == 0 then
         -- Mini-game initialization
         minigame_timer = minigame_game_length -- Set total game time
@@ -836,6 +851,11 @@ function update_game_over()
         toilet_vel_y = 0
         toilet_speed = 0.8
 
+        -- Reset animation
+        character_animation_timer = 0
+        drinking_animation_trigger = false
+        drinking_animation_duration = 60
+
         current_state = game_state.main_menu
     end
 end
@@ -938,7 +958,7 @@ function draw_menu()
     print("❎ interact", 10, 95, 6)
     print("press ❎ to start", 10, 115, 12)
 end
-
+minigame_active = true
 function draw_game()
     
     -- Check active mini-game
@@ -1028,10 +1048,22 @@ function draw_game()
         char_sprite_drinking_id = wasted_char_drinking_id
     end
 
-    -- Draw character with animation (switches every second)
+    -- Draw character with animation
     local current_char_sprite = char_sprite_idle_id
-    if flr(character_animation_timer / 60) % 2 == 1 then
-        current_char_sprite = char_sprite_drinking_id
+    
+    -- Check if currently in wasted state
+    local is_wasted = intoxication >= intoxication_wasted_threshold or wasted_timer > 0
+    
+    if is_wasted then
+        -- Wasted state: use old timer-based animation (every second)
+        if flr(character_animation_timer / 60) % 2 == 1 then
+            current_char_sprite = char_sprite_drinking_id
+        end
+    else
+        -- Non-wasted state: synchronized with drinking
+        if drinking_animation_trigger then
+            current_char_sprite = char_sprite_drinking_id
+        end
     end
 
     spr(current_char_sprite, 78, third_row_sprite_y, 2, 2)
@@ -1315,6 +1347,12 @@ function _draw()
     elseif current_state == game_state.win then
         draw_win()
     end
+end
+
+if minigame_active then 
+    music(2)
+elseif not minigame_active then
+    music(-1)
 end
 
 __gfx__
