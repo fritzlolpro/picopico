@@ -892,6 +892,10 @@ function draw_game()
     -- Salary countdown
     local time_to_salary = salary_frequency - (total_seconds % salary_frequency)
     print("salary in: " .. time_to_salary .. "s", 5, first_row_text_y + 8, 7)
+    
+    -- Next sip countdown
+    local time_to_sip = drinking_frequency - (total_seconds % drinking_frequency)
+    print("sip in: " .. time_to_sip .. "s", 5, first_row_text_y + 16, 6)
 
     local time_id = 54
     spr(time_id, 32, first_row_sprite_y)
@@ -969,7 +973,7 @@ function draw_game()
     
 
     if drinking_efficiency_timer > 0 then
-        print("boost: " .. flr(drinking_efficiency_timer / 60) .. "s", 0, effect_info_y - 10, 12)
+        print("boost: " .. flr(drinking_efficiency_timer / 60) .. "s", 6, effect_info_y - 10, 12)
     end
 
     -- Status effects
