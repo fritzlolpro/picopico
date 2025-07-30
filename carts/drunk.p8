@@ -26,6 +26,7 @@ money = 267
 liver_health = base_liver_health
 intoxication = 150
 selected_drink_index = 1 -- Selected drink in shop
+game_over_reason = "" -- Reason for game over
 
 -- Character animation
 character_animation_timer = 0 -- Timer for character animation (changes every second)
@@ -72,6 +73,11 @@ liver_protection_timer = 0
 drinking_efficiency_bonus = 0
 drinking_efficiency_timer = 0
 max_liver_bonus = 0
+
+-- Sobriety protection system
+sobriety_timer = 0 -- Timer for too sober state
+sobriety_duration = 480 -- 8 seconds at 60fps (8 * 60)
+last_intoxication_check = 0 -- To track if intoxication increased
 
 -- Drink effect functions
 function sanitizer_effect()
@@ -266,6 +272,9 @@ function update_time()
         
         -- Update critical protection mechanism
         update_critical_protection()
+        
+        -- Update sobriety protection mechanism
+        update_sobriety_protection()
 
         -- Automatic alcohol consumption every DRINKING_FREQUENCY seconds
         -- Use wasted protection mechanism
@@ -474,6 +483,35 @@ function update_critical_protection()
     end
     
     was_critical_last_frame = is_critical_now
+end
+
+-- Sobriety protection mechanism
+function update_sobriety_protection()
+    local is_too_sober = intoxication < intoxication_optimal_min
+    
+    if is_too_sober then
+        -- Check if intoxication increased since last check
+        if intoxication > last_intoxication_check then
+            -- Intoxication increased, reset timer
+            sobriety_timer = 0
+        else
+            -- Still too sober, update timer
+            sobriety_timer += 1
+            
+            -- Check if timer expired
+            if sobriety_timer >= sobriety_duration then
+                -- Game over - too sober
+                current_state = game_state.game_over
+                game_over_reason = "too sober! you need to drink more alcohol to maintain optimal state."
+            end
+        end
+    else
+        -- Not too sober, reset timer
+        sobriety_timer = 0
+    end
+    
+    -- Update last intoxication check
+    last_intoxication_check = intoxication
 end
 
 function can_auto_drink()
@@ -995,6 +1033,12 @@ function draw_game()
     if chaotic_movement_timer > 0 then
         -- Chaotic movement
         print("chaotic!", 10, effect_info_y, 13)
+    end
+
+    if sobriety_timer > 0 then
+        -- Too sober warning
+        local remaining_time = flr((sobriety_duration - sobriety_timer) / 60)
+        print("too sober! " .. remaining_time .. "s", 10, effect_info_y, 8)
     end
 
 
