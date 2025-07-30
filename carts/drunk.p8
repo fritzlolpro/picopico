@@ -250,7 +250,7 @@ function _update60()
         if sobriety_timer >= sobriety_duration then
             -- Game over - too sober
             current_state = game_state.game_over
-            game_over_reason = "too sober! you can't handle this!"
+            game_over_reason = "sobriety is a sin"
         end
     else
         -- Reset timer when not too sober
@@ -629,17 +629,18 @@ stream_max_length = 80 -- Maximum stream length
 toilet_x = 64  -- Toilet horizontal position
 toilet_y = 64  -- Toilet vertical position
 toilet_size = 4 -- Toilet sprite size: fixed 32x32 pixels (4x4 tiles)
-toilet_hit_time = 0 -- Time spent hitting toilet
-toilet_target_time = 600 -- 10 seconds at 60fps
+
+toilet_hit_time = 0 -- Time spent hitting toilet continuously (in frames)
+toilet_target_time = 300 -- Required continuous hit time: 5 seconds at 60fps  
 toilet_vel_x = 0 -- Toilet velocity X
 toilet_vel_y = 0 -- Toilet velocity Y
 toilet_speed = 0.8 -- Base toilet movement speed
-minigame_game_length = 5 * 60 -- Mini-game length in seconds
+minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames
 
 function update_minigame()
     if minigame_timer == 0 then
         -- Mini-game initialization
-        minigame_timer = toilet_target_time -- 5 seconds
+        minigame_timer = minigame_game_length -- Set total game time
         toilet_hit_time = 0
         -- Reset toilet position and velocity
         toilet_x = 32 + rnd(64) -- Random x between 32-96
@@ -707,16 +708,20 @@ function update_minigame()
        stream_top_y <= toilet_y + toilet_size * 8 and stream_y >= toilet_y then
         toilet_hit = true
         toilet_hit_time += 1
+    else
+        -- Reset hit time when not hitting (must be continuous)
+        toilet_hit_time = 0
     end
 
     -- Check mini-game completion
-    if toilet_hit_time >= minigame_game_length then
-        -- Success - get money bonus
-        money += 200
+    if toilet_hit_time >= toilet_target_time then
+        -- Success - player hit continuously for required time
+        liver_health += 100
         minigame_active = false
         minigame_timer = 0
     elseif minigame_timer <= 0 then
         -- Failure - lose liver health
+        intoxication -= 100
         liver_health -= 500
         minigame_active = false
         minigame_timer = 0
@@ -751,7 +756,7 @@ end
 -- Apply bonus effect
 function apply_bonus_effect(bonus)
     if bonus.effect == "heal_liver" then
-        liver_health = min(1000 + max_liver_bonus, liver_health + bonus.value)
+        liver_health = liver_health + bonus.value
     elseif bonus.effect == "remove_intoxication" then
         intoxication -= bonus.value
     elseif bonus.effect == "add_money" then
@@ -780,6 +785,7 @@ function update_game_over()
         frames = 0
         selected_drink_index = 1
         selected_bonus_index = 1
+        game_over_reason = "" -- Reset game over reason
 
         -- Reset bonuses
         liver_protection_bonus = 0
@@ -898,7 +904,7 @@ function _draw()
         draw_payday()
     elseif current_state == game_state.game_over then
         draw_game_over()
-        draw_game()
+        -- draw_game()
     elseif current_state == game_state.win then
         draw_win()
     end
@@ -928,7 +934,7 @@ function draw_menu()
 end
 
 function draw_game()
-    
+    minigame_active =true
     -- Check active mini-game
     if minigame_active then
         draw_minigame()
@@ -1160,7 +1166,7 @@ function draw_minigame()
     
     -- Draw UI
     print("time: "..flr(minigame_timer/60).."s", 5, 110, 7)
-    print("hit time: "..flr(toilet_hit_time/60).."/"..minigame_game_length.."s", 5, 120, 11)
+    print("hit time: "..flr(toilet_hit_time/60).."/"..flr(toilet_target_time/60).."s", 5, 120, 11)
 
     local intox_color = get_intoxication_color()
     print("drunk: " .. flr(intoxication), 80, 110, intox_color)
@@ -1253,7 +1259,7 @@ function draw_payday()
     end
     
     -- Instructions
-    print("arrows: select, x/o: buy", 5, 96, 7)
+    print("arrows: select, x: buy", 5, 96, 7)
     
     -- Show selected bonus info
     local selected_bonus = payday_bonuses[selected_bonus_index]
@@ -1263,18 +1269,14 @@ end
 
 function draw_game_over()
     cls(8)
-    print("game over", 30, 50, 2)
+    print("you died", 10, 50, 2)
 
-    -- Determine cause of loss
-    if liver_health <= 0 then
-        print("liver failure", 25, 65, 7)
-    elseif intoxication <= intoxication_min_threshold then
-        print("too sober to work", 20, 65, 7)
-    elseif intoxication >= intoxication_critical then
-        print("alcohol poisoning", 20, 65, 7)
+    -- Display the reason stored in game_over_reason
+    if game_over_reason != "" then
+        print(game_over_reason, 10, 65, 7)
     end
 
-    print("press x to restart", 20, 85, 6)
+    print("press x to restart", 10, 85, 6)
 end
 
 function draw_win()
