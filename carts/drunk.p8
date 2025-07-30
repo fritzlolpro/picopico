@@ -12,7 +12,8 @@ game_state = {
 -- Game constants
 game_duration = 360 -- Total game duration in seconds
 salary = 267 -- Salary amount in rubles per payment
-salary_frequency = 30 -- How often salary comes in seconds
+-- salary_frequency = 30 -- How often salary comes in seconds
+salary_frequency = 5 -- How often salary comes in seconds
 base_liver_health = 2000 -- Initial liver health in units
 liver_damage_factor = 0.001833 -- Liver damage growth factor per second (+0.1833% damage each second)
 base_sobering_rate = 15 -- Intoxication units lost every SOBERING_FREQUENCY seconds
@@ -26,6 +27,7 @@ money = 267
 liver_health = base_liver_health
 intoxication = 150
 selected_drink_index = 1 -- Selected drink in shop
+selected_bonus_index = 1 -- Selected bonus in payday
 game_over_reason = "" -- Reason for game over
 
 -- Character animation
@@ -59,12 +61,12 @@ intoxication_critical = 500 -- Critical level - game over
 
 -- Payday bonuses
 payday_bonuses = {
-    { name = "zakuska", effect = "heal_liver", value = 173, chance = 0.2 },
-    { name = "opohmel", effect = "add_intoxication", value = 37, chance = 0.15 },
-    { name = "halturka", effect = "add_money", value = 123, chance = 0.25 },
-    { name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800, chance = 0.15 }, -- 30 sec
-    { name = "ascorbic", effect = "increase_max_liver", value = 189, chance = 0.1 },
-    { name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800, chance = 0.15 } -- 30 sec
+    { name = "zakuska", effect = "heal_liver", value = 200, cost = 100, description = "heal liver" },
+    { name = "opohmel", effect = "remove_intoxication", value = 150,  cost = 120, description = "feel better" },
+    { name = "halturka", effect = "add_money", value = 123,  cost = 0, description = "side hassle" },
+    { name = "activated_carbon", effect = "liver_protection", value = 0.47, duration = 1800,  cost = 100, description = "protect liver" },
+    { name = "ascorbic", effect = "increase_max_liver", value = 189, cost = 100, description = "liver got stronger" },
+    { name = "alcoholic_training", effect = "drinking_efficiency", value = 0.31, duration = 1800,  cost = 10, description = "become strongman" }
 }
 
 -- Temporary bonus effects
@@ -187,6 +189,12 @@ function _init()
 end
 
 function _update60()
+    -- Handle payday state first
+    if current_state == game_state.payday then
+        update_payday()
+        return
+    end
+    
     -- Update character animation timer (slower during slowmotion)
     if slowmotion_timer > 0 then
         if frames % slow_motion_multiplier == 0 then
@@ -264,8 +272,6 @@ function _update60()
         update_menu()
     elseif current_state == game_state.playing then
         update_game()
-    elseif current_state == game_state.payday then
-        update_payday()
     elseif current_state == game_state.game_over then
         update_game_over()
     elseif current_state == game_state.win then
@@ -277,6 +283,11 @@ frames = 0
 total_seconds = 0
 
 function update_time()
+    -- Don't update time during payday
+    if current_state == game_state.payday then
+        return
+    end
+    
     frames += 1
     
     -- Calculate effective frame rate (slower during slowmotion)
@@ -533,6 +544,7 @@ end
 
 -- Function to trigger payday (referenced in update_time)
 function trigger_payday()
+    -- Only credit salary, don't apply bonus yet
     current_state = game_state.payday
 end
 
@@ -714,20 +726,26 @@ function update_minigame()
 end
 
 function update_payday()
-    -- Handle payday logic - salary already credited in update_time()
-
-    -- Apply random bonus at payday
-    apply_payday_bonus()
-
-    current_state = game_state.playing
-end
-
--- Function for applying payday bonuses
-function apply_payday_bonus()
-    for bonus in all(payday_bonuses) do
-        if rnd(1) < bonus.chance then
-            apply_bonus_effect(bonus)
-            break -- only one bonus at a time
+    -- Handle bonus selection with arrow keys
+    if btnp(0) then -- Left
+        selected_bonus_index = max(1, selected_bonus_index - 1)
+    elseif btnp(1) then -- Right
+        selected_bonus_index = min(#payday_bonuses, selected_bonus_index + 1)
+    elseif btnp(2) then -- Up
+        selected_bonus_index = max(1, selected_bonus_index - 3)
+    elseif btnp(3) then -- Down
+        selected_bonus_index = min(#payday_bonuses, selected_bonus_index + 3)
+    elseif btnp(4) or btnp(5) then
+        -- X or O button to apply selected bonus
+        local selected_bonus = payday_bonuses[selected_bonus_index]
+        if money >= selected_bonus.cost then
+            money -= selected_bonus.cost
+            apply_bonus_effect(selected_bonus)
+            current_state = game_state.playing
+        end
+        -- If not enough money, just continue without bonus
+        if money < selected_bonus.cost then
+            current_state = game_state.playing
         end
     end
 end
@@ -736,8 +754,8 @@ end
 function apply_bonus_effect(bonus)
     if bonus.effect == "heal_liver" then
         liver_health = min(1000 + max_liver_bonus, liver_health + bonus.value)
-    elseif bonus.effect == "add_intoxication" then
-        intoxication += bonus.value
+    elseif bonus.effect == "remove_intoxication" then
+        intoxication -= bonus.value
     elseif bonus.effect == "add_money" then
         money += bonus.value
     elseif bonus.effect == "liver_protection" then
@@ -763,6 +781,7 @@ function update_game_over()
         total_seconds = 0
         frames = 0
         selected_drink_index = 1
+        selected_bonus_index = 1
 
         -- Reset bonuses
         liver_protection_bonus = 0
@@ -1200,10 +1219,48 @@ end
 
 
 function draw_payday()
-    cls(3)
-    print("payday!", 35, 50, 7)
-    print("salary: " .. salary .. "r", 30, 65, 6)
-    print("bonus applied!", 30, 80, 11)
+    cls(0)
+    print("payday!", 35, 10, 7)
+    print("salary: " .. salary .. "r", 30, 20, 6)
+    print("money: " .. money .. "r", 30, 30, 7)
+    
+    -- Draw bonus icons in 3x2 grid
+    local start_x = 20
+    local start_y = 45
+    local icon_spacing = 30
+    
+    for i = 1, #payday_bonuses do
+        local bonus = payday_bonuses[i]
+        local col = (i - 1) % 3
+        local row = flr((i - 1) / 3)
+        local x = start_x + col * icon_spacing
+        local y = start_y + row * icon_spacing
+        
+        -- Draw bonus icon (sprites 68-73)
+        local icon_id = 67 + i -- sprites 68-73
+        spr(icon_id, x, y)
+        
+        -- Draw cost below icon
+        print(bonus.cost .. "r", x, y + 10, 6)
+        
+        -- Draw selection cursor
+        if i == selected_bonus_index then
+            rect(x - 1, y - 1, x + 8, y + 8, 7)
+        end
+        
+        -- Show if player can't afford
+        if money < bonus.cost then
+            print("x", x + 2, y + 2, 8)
+        end
+    end
+    
+    -- Instructions
+    print("arrows: select, x/o: buy", 5, 96, 7)
+    
+    -- Show selected bonus info
+    local selected_bonus = payday_bonuses[selected_bonus_index]
+    print(selected_bonus.name, 5, 102, 11)
+    print(selected_bonus.description, 5, 108, 6)
 end
 
 function draw_game_over()
