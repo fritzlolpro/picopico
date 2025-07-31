@@ -5,8 +5,9 @@ game_state = {
     main_menu = 0,
     playing = 1,
     payday = 2,
-    game_over = 3,
-    win = 4
+    minigame = 3,
+    game_over = 4,
+    win = 5
 }
 -- ⬇️⬆️➡️⬅️🅾️❎
 -- Game constants
@@ -110,12 +111,13 @@ end
 
 function beer_effect()
     -- Diuretic effect (pause for mini-game)
-    minigame_active = true
+    minigame_timer = 0 -- Reset timer to trigger initialization
+    change_state(game_state.minigame)
 end
 
 function vodka_effect()
     -- Blackout 2 sec (controls don't work)
-    blackout_timer = 120
+    blackout_timer = 220
     -- 2 seconds at 60fps
 end
 
@@ -165,6 +167,7 @@ drinks = {
         intoxication = 65,
         liver_damage = 3,
         effect_chance = 0.20,
+        -- effect_chance = 1,
         effect_func = beer_effect
     },
     {
@@ -188,11 +191,53 @@ drinks = {
 function _init()
     -- Initialize game state
     current_state = game_state.main_menu
+    
+    previous_state = current_state -- Track previous state for change detection
 end
 
+-- Function called once when state changes
+function on_state_change(from_state, to_state)
+    -- This function is called exactly once when state transitions occur
+    -- Perfect place to start/stop music, play sound effects, etc.
+    
+    -- Example usage:
+    -- if to_state == game_state.playing then
+    --     -- Start game music
+    -- elseif to_state == game_state.payday then
+    --     -- Play payday sound
+    -- elseif to_state == game_state.game_over then
+    --     -- Play game over sound
+    -- elseif to_state == game_state.win then
+    --     -- Play victory music
+    -- end
+    if to_state == game_state.minigame then
+        music(2)
+    end
+    if to_state == game_state.playing then
+        music(-1)
+    end
+end
 
+-- Check if state has changed and call on_state_change if needed
+function check_state_change()
+    if current_state != previous_state then
+        on_state_change(previous_state, current_state)
+        previous_state = current_state
+    end
+end
+
+-- Helper function to safely change state (optional, for convenience)
+function change_state(new_state)
+    if current_state != new_state then
+        current_state = new_state
+        -- check_state_change() will be called on next _update60()
+    end
+end
 
 function _update60()
+    -- Check for state changes
+    check_state_change()
+    
     -- Handle payday state first
     if current_state == game_state.payday then
         update_payday()
@@ -262,7 +307,7 @@ function _update60()
         -- Check if timer expired
         if sobriety_timer >= sobriety_duration then
             -- Game over - too sober
-            current_state = game_state.game_over
+            change_state(game_state.game_over)
             game_over_reason = "sobriety is a sin"
         end
     else
@@ -285,6 +330,8 @@ function _update60()
         update_menu()
     elseif current_state == game_state.playing then
         update_game()
+    elseif current_state == game_state.minigame then
+        update_minigame()
     elseif current_state == game_state.game_over then
         update_game_over()
     elseif current_state == game_state.win then
@@ -324,7 +371,7 @@ function update_time()
 
         -- Automatic alcohol consumption every DRINKING_FREQUENCY seconds
         -- Use wasted protection mechanism
-        if total_seconds % drinking_frequency == 0 and not minigame_active and can_auto_drink() then
+        if total_seconds % drinking_frequency == 0 and current_state == game_state.playing and can_auto_drink() then
             drink_alcohol()
             drinking_animation_trigger = true -- Trigger drinking animation
         end
@@ -346,7 +393,6 @@ blind_timer = 0
 hallucination_timer = 0
 liver_protection_timer = 0
 blackout_timer = 0
-minigame_active = false
 shaking_timer = 0 -- For "shaking selection" effect
 slowmotion_timer = 0 -- For slowmotion effect
 inverted_controls_timer = 0 -- For inverted controls
@@ -484,11 +530,11 @@ end
 function check_game_conditions()
     if liver_health <= 0 then
         -- Instant game over on liver failure
-        current_state = game_state.game_over
+        change_state(game_state.game_over)
         game_over_reason = "liver is dead"
     elseif total_seconds >= game_duration then
         -- 360 seconds passed - victory
-        current_state = game_state.win
+        change_state(game_state.win)
     end
     -- Note: too sober and critical intoxication are now handled by timer mechanisms
     -- in update_sobriety_protection() and critical_timer logic
@@ -570,7 +616,7 @@ end
 -- Function to trigger payday (referenced in update_time)
 function trigger_payday()
     -- Only credit salary, don't apply bonus yet
-    current_state = game_state.payday
+    change_state(game_state.payday)
 end
 
 -- Placeholder update functions
@@ -578,19 +624,13 @@ function update_menu()
     -- Handle menu input
     if btnp(5) then
         -- X button
-        current_state = game_state.playing
+        change_state(game_state.playing)
     end
 end
 
 function update_game()
     -- Main game logic
     -- Handle drink selection, consumption, etc.
-
-    -- Check active mini-game
-    if minigame_active then
-        update_minigame()
-        return
-    end
 
     -- Handle drink selection
     handle_drink_selection()
@@ -658,7 +698,6 @@ toilet_speed = 0.8 -- Base toilet movement speed
 minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames
 
 function update_minigame()
-    
     if minigame_timer == 0 then
         -- Mini-game initialization
         minigame_timer = minigame_game_length -- Set total game time
@@ -738,14 +777,14 @@ function update_minigame()
     if toilet_hit_time >= toilet_target_time then
         -- Success - player hit continuously for required time
         liver_health += 100
-        minigame_active = false
         minigame_timer = 0
+        change_state(game_state.playing)
     elseif minigame_timer <= 0 then
         -- Failure - lose liver health
         intoxication -= 100
         liver_health -= 500
-        minigame_active = false
         minigame_timer = 0
+        change_state(game_state.playing)
     end
 end
 
@@ -765,11 +804,11 @@ function update_payday()
         if money >= selected_bonus.cost then
             money -= selected_bonus.cost
             apply_bonus_effect(selected_bonus)
-            current_state = game_state.playing
+            change_state(game_state.playing)
         end
         -- If not enough money, just continue without bonus
         if money < selected_bonus.cost then
-            current_state = game_state.playing
+            change_state(game_state.playing)
         end
     end
 end
@@ -833,7 +872,6 @@ function update_game_over()
         inverted_controls_timer = 0
         chaotic_movement_timer = 0
         blackout_timer = 0
-        minigame_active = false
         minigame_timer = 0
         minigame_target = 0
         minigame_progress = 0
@@ -856,7 +894,7 @@ function update_game_over()
         drinking_animation_trigger = false
         drinking_animation_duration = 60
 
-        current_state = game_state.main_menu
+        change_state(game_state.main_menu)
     end
 end
 
@@ -897,7 +935,6 @@ function update_win()
         inverted_controls_timer = 0
         chaotic_movement_timer = 0
         blackout_timer = 0
-        minigame_active = false
         minigame_timer = 0
         minigame_target = 0
         minigame_progress = 0
@@ -915,12 +952,13 @@ function update_win()
         toilet_vel_y = 0
         toilet_speed = 0.8
 
-        current_state = game_state.main_menu
+        change_state(game_state.main_menu)
     end
 end
 
 function _draw()
     cls()
+  
 
     if current_state == game_state.main_menu then
         draw_menu()
@@ -928,6 +966,8 @@ function _draw()
         draw_game()
     elseif current_state == game_state.payday then
         draw_payday()
+    elseif current_state == game_state.minigame then
+        draw_minigame()
     elseif current_state == game_state.game_over then
         draw_game_over()
         -- draw_game()
@@ -958,15 +998,10 @@ function draw_menu()
     print("❎ interact", 10, 95, 6)
     print("press ❎ to start", 10, 115, 12)
 end
-minigame_active = true
-function draw_game()
-    
-    -- Check active mini-game
-    if minigame_active then
-        draw_minigame()
-        return
-    end
 
+
+function draw_game()
+   
     local first_row_text_y = 1
     local first_row_sprite_y = 0
 
@@ -1009,7 +1044,7 @@ function draw_game()
     print(flr(liver_health) .. "/" .. flr(base_liver_health + max_liver_bonus), 68, second_row_text_y, 8)
 
     if liver_protection_timer > 0 then
-        print("protection: " .. flr(liver_protection_timer / 60) .. "s", 5, second_row_text_y, 11)
+        print("protection: " .. flr(liver_protection_timer / 60) .. "s", 5, third_row_text_y, 11)
     end
 
     local sober_char_idle_id = 64
@@ -1180,7 +1215,7 @@ function draw_game()
 end
 
 function draw_minigame()
-    cls(1) -- Blue background
+    cls(1)
     print("bathroom emergency!", 20, 5, 7)
     print("hit toilet for 5 seconds!", 15, 15, 8)
     map(0, 0, 0, 32, 16, 10)
@@ -1340,6 +1375,8 @@ function _draw()
         draw_menu()
     elseif current_state == game_state.playing then
         draw_game()
+    elseif current_state == game_state.minigame then
+        draw_minigame()
     elseif current_state == game_state.payday then
         draw_payday()
     elseif current_state == game_state.game_over then
@@ -1349,11 +1386,7 @@ function _draw()
     end
 end
 
-if minigame_active then 
-    music(2)
-elseif not minigame_active then
-    music(-1)
-end
+
 
 __gfx__
 00000bbbbbbb0000000bbbbbbbbbb000000000000046440000000888000990000009a000000fe000007770000000000044444444444444444444444444444444
@@ -1618,7 +1651,7 @@ c2c2c0d2c2c2c2c0c2c2c0c2c2c2d2d2000000000000000000000000000000000000000000000000
 d2c2d2d2d2d2d2d2d2c2c2c2d2c2d2d200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 000400001832018331183412435230312003000030000300183201833118341243523031200300003000030018320183311834124352303120030000300003001832018331183412435230312003000030000300
-0001000016714177100c7201a7301c7301f73021730237301a7301d7302273036720357103f71526700287002a7002d70032700367003c7003f70025700277002a7002c7002e7003270035700397003d70000700
+0007000016714177100c7201a7301c7301f73021730237301a7301d7302273036720357103f71526700287002a7002d70032700367003c7003f70025700277002a7002c7002e7003270035700397003d70000700
 00010000085101051014510185101b5101d5101d5101d5101d5101d5101b51018510145100f5100d5100a5100951008510095100a5100e51012510165101d510235102c5002e5003250035500395003d50000500
 000200001e7631e7531f7431f733237232a713007030f7031d7331e733207332271325713297131e7031d7030f7231072312723177131a7131e713237032170313713167131a7131d71321713277131270310703
 000900000017500165001550014500135001250217502125031750315503135031150017500155001350011506105061050610506105061050610506105061050610506105061050610506105061050610506105
@@ -1629,7 +1662,7 @@ __sfx__
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 010e0000136451362513615136153c6251b5051f6251b505376050f505136351b5053c6251b505186151b505136451362513615136153c6251b5051f6251b505376050f505136351b5053c6251b505186151b505
-010700000f5450f5250f5450f5251b5451b5251b5451b5250f5350f5150f5350f5151b5351b5151b5351b5150f5250f5150f5250f5151b5251b5151b5251b5150f5150f5050f5150f5050f5150f5050f5151b505
+d50500000f5450f5250f5450f5251b5451b5251b5451b5250f5350f5150f5350f5151b5351b5151b5351b5150f5250f5150f5250f5151b5251b5151b5251b5150f5150f5050f5150f5050f5150f5050f5151b505
 010700000a5450a5250a5450a525165451652516545165250a5350a5150a5350a515165351651516535165150a5250a5150a5250a515165251651516525165150a5150a5050a5150a50516515165051651516505
 010700000c5450c5250c5450c525185451852518545185250c5350c5150c5350c515185351851518535185150c5250c5150c5250c515185251851518525185150c5150c5050c5150c50518515185051851518505
 010700000554505525055450552511545115251154511525055350551505535055151153511515115351151505515055050551505505115151150511515115050550505505055050550511505115051150511505
@@ -1664,7 +1697,7 @@ __sfx__
 01070000007500073000710007000c7500c7300c71000700007500073000710007000c7500c7300c71000700007500073000710007000c7500c7300c71000700007500073000710007000c7500c7300c71000700
 010700000575005730057100070011750117301171000700057500573005710007001175011730117100070005750057300571000700117501173011710007001375013730137100070014750147301471000700
 010700000a7500a7300a71000700167501673016710007000a7500a7300a71000700167501673016710007000a7500a7300a71000700117501173011710007001375013730137100070015750157301571000700
-010700002776527765277552775527745277452773527735277252772527715277152776527755277552774527735277252772527715267652675526745267352476524755247552474524745247352472524715
+590500002776527765277552775527745277452773527735277252772527715277152776527755277552774527735277252772527715267652675526745267352476524755247552474524745247352472524715
 010700002676526755267452673527765277552774527735277652775527745277352976529755297452973522765227552274522735227252272522715227152271522705227152270522715227052270522705
 010700002476524765247552475524745247452473524735247252472524715247151f7651f7551f7451f7351f7251f7251f7251f7151f7151f7051f7151f7052676526755267452673526725267252671526715
 010400002476224765247622476524752247552475224755247422474524742247452473224735247322473524722247252472224725247222472524722247252472224725247222472524712247152471224715
@@ -1684,10 +1717,10 @@ __sfx__
 __music__
 00 41424344
 00 41424344
-00 2f0c4344
+03 2f0c4304
 00 300d4344
-00 310e4344
-00 320f4344
+04 310e4344
+07 320f4344
 00 14244344
 01 15254344
 00 16254344
