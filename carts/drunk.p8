@@ -60,7 +60,7 @@ was_critical_last_frame = nil
 
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
-intoxication_optimal_min = 50 -- Optimal range
+intoxication_optimal_min = 60 -- Optimal range
 intoxication_optimal_max = 400 -- Optimal range
 intoxication_wasted_threshold = 450 -- "Wasted" - penalties
 intoxication_critical = 500 -- Critical level - game over
@@ -84,7 +84,7 @@ max_liver_bonus = nil
 
 -- Sobriety protection system
 sobriety_timer = nil
-sobriety_duration = 480 -- 8 seconds at 60fps (8 * 60)
+sobriety_duration = 600 -- 10 seconds at 60fps (10 * 60)
 last_intoxication_check = nil
 
 -- Drink effect functions
@@ -270,18 +270,8 @@ end
 -- Function called once when state changes
 function on_state_change(from_state, to_state)
     -- This function is called exactly once when state transitions occur
-    -- Perfect place to start/stop music, play sound effects, etc.
-    
-    -- Example usage:
-    -- if to_state == game_state.playing then
-    --     -- Start game music
-    -- elseif to_state == game_state.payday then
-    --     -- Play payday sound
-    -- elseif to_state == game_state.game_over then
-    --     -- Play game over sound
-    -- elseif to_state == game_state.win then
-    --     -- Play victory music
-    -- end
+  
+    music(-1)
     if to_state == game_state.minigame then
         music(2)
     end
