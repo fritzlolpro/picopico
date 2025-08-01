@@ -26,17 +26,17 @@ sobering_frequency = 1 -- How often sobering occurs in seconds
 tolerance_factor = 0.0015 -- Alcohol effectiveness decrease over time (-0.15% effectiveness each second)
 drinking_frequency = 5 -- How often character drinks a shot in seconds
 
--- Basic resources
-money = 267
-liver_health = base_liver_health
-intoxication = 150
-selected_drink_index = 1 -- Selected drink in shop
-selected_bonus_index = 1 -- Selected bonus in payday
-game_over_reason = "" -- Reason for game over
+-- Game variables (initialized in init_game_state())
+money = nil
+liver_health = nil
+intoxication = nil
+selected_drink_index = nil
+selected_bonus_index = nil
+game_over_reason = nil
 
 -- Character animation
-character_animation_timer = 0 -- Timer for character animation (changes every second)
-drinking_animation_trigger = false -- Trigger for drinking animation
+character_animation_timer = nil
+drinking_animation_trigger = nil
 drinking_animation_duration = 60 -- Duration of drinking animation (1 second)
 
 -- Slowmotion effect
@@ -44,19 +44,19 @@ slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
 
 -- Wasted protection mechanism
 wasted_protection_uses = 3 -- How many times player can be saved from auto-drinking when wasted
-wasted_protection_remaining = 3 -- Remaining uses
-was_wasted_last_frame = false -- Track when entering/exiting wasted state
+wasted_protection_remaining = nil
+was_wasted_last_frame = nil
 wasted_overflow_liver_damage = 50 -- Base liver damage when entering wasted after protection is exhausted
-wasted_total_count = 0 -- Total number of times entered wasted state (for display)
-wasted_cycle_count = 0 -- Number of completed cycles (increases damage multiplier)
+wasted_total_count = nil
+wasted_cycle_count = nil
 wasted_duration = 600 -- How long to stay in wasted state (10 seconds at 60fps)
-wasted_timer = 0 -- Timer for forced wasted state
+wasted_timer = nil
 
 -- Critical protection mechanism
 critical_duration = 600 -- How long to stay in critical state (10 seconds at 60fps)
-critical_timer = 0 -- Timer for forced critical state
+critical_timer = nil
 critical_liver_damage = 200 -- Liver damage when critical timer expires
-was_critical_last_frame = false -- Track when entering/exiting critical state
+was_critical_last_frame = nil
 
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
@@ -76,16 +76,16 @@ payday_bonuses = {
 }
 
 -- Temporary bonus effects
-liver_protection_bonus = 0
-liver_protection_timer = 0
-drinking_efficiency_bonus = 0
-drinking_efficiency_timer = 0
-max_liver_bonus = 0
+liver_protection_bonus = nil
+liver_protection_timer = nil
+drinking_efficiency_bonus = nil
+drinking_efficiency_timer = nil
+max_liver_bonus = nil
 
 -- Sobriety protection system
-sobriety_timer = 0 -- Timer for too sober state
+sobriety_timer = nil
 sobriety_duration = 480 -- 8 seconds at 60fps (8 * 60)
-last_intoxication_check = 0 -- To track if intoxication increased
+last_intoxication_check = nil
 
 -- Drink effect functions
 function sanitizer_effect()
@@ -191,8 +191,76 @@ drinks = {
     }
 }
 
+function init_game_state()
+    -- Basic resources
+    money = 267
+    liver_health = base_liver_health
+    intoxication = 230
+    selected_drink_index = 1
+    selected_bonus_index = 1
+    game_over_reason = ""
+    
+    -- Time tracking
+    total_seconds = 0
+    frames = 0
+    
+    -- Character animation
+    character_animation_timer = 0
+    drinking_animation_trigger = false
+    drinking_animation_duration = 60
+    
+    -- Wasted protection
+    wasted_protection_remaining = wasted_protection_uses
+    was_wasted_last_frame = false
+    wasted_total_count = 0
+    wasted_cycle_count = 0
+    wasted_timer = 0
+    
+    -- Critical protection
+    critical_timer = 0
+    was_critical_last_frame = false
+    
+    -- Sobriety protection
+    sobriety_timer = 0
+    last_intoxication_check = 0
+    
+    -- Temporary bonus effects
+    liver_protection_bonus = 0
+    liver_protection_timer = 0
+    drinking_efficiency_bonus = 0
+    drinking_efficiency_timer = 0
+    max_liver_bonus = 0
+    
+    -- Effect timers
+    blind_timer = 0
+    hallucination_timer = 0
+    blackout_timer = 0
+    shaking_timer = 0
+    slowmotion_timer = 0
+    inverted_controls_timer = 0
+    chaotic_movement_timer = 0
+    chaotic_last_jump_time = 0
+    
+    -- Minigame variables
+    minigame_timer = 0
+    minigame_target = 0
+    minigame_progress = 0
+    stream_x = 64
+    stream_y = 120
+    stream_length = 30
+    stream_max_length = 80
+    toilet_x = 64
+    toilet_y = 64
+    toilet_size = 4
+    toilet_hit_time = 0
+    toilet_vel_x = 0
+    toilet_vel_y = 0
+    toilet_speed = 0.8
+end
+
 function _init()
     -- Initialize game state
+    init_game_state()
     current_state = game_state.main_menu
     
     previous_state = current_state
@@ -352,8 +420,9 @@ function _update60()
     end
 end
 
-frames = 0
-total_seconds = 0
+-- Time variables (initialized in init_game_state())
+frames = nil
+total_seconds = nil
 
 function update_time()
     -- Don't update time during payday
@@ -400,15 +469,15 @@ function update_time()
     end
 end
 
--- Effect variables
-blind_timer = 0
-hallucination_timer = 0
-blackout_timer = 0
-shaking_timer = 0 -- For "shaking selection" effect
-slowmotion_timer = 0 -- For slowmotion effect
-inverted_controls_timer = 0 -- For inverted controls
-chaotic_movement_timer = 0 -- For chaotic frame movement
-chaotic_last_jump_time = 0 -- Track when last jump occurred
+-- Effect variables (initialized in init_game_state())
+blind_timer = nil
+hallucination_timer = nil
+blackout_timer = nil
+shaking_timer = nil
+slowmotion_timer = nil
+inverted_controls_timer = nil
+chaotic_movement_timer = nil
+chaotic_last_jump_time = nil
 
 -- Update effect timers
 function update_effects()
@@ -676,26 +745,25 @@ function handle_drink_selection()
     end
 end
 
--- Mini-game for diuretic effect
-minigame_timer = 0
-minigame_target = 0
-minigame_progress = 0
+-- Mini-game variables (initialized in init_game_state())
+minigame_timer = nil
+minigame_target = nil
+minigame_progress = nil
 
--- Stream minigame variables
-stream_x = 64  -- Stream horizontal position
-stream_y = 120 -- Stream vertical position (bottom of screen)
-stream_length = 30 -- Current stream length
-stream_max_length = 80 -- Maximum stream length
-toilet_x = 64  -- Toilet horizontal position
-toilet_y = 64  -- Toilet vertical position
-toilet_size = 4 -- Toilet sprite size: fixed 32x32 pixels (4x4 tiles)
-
-toilet_hit_time = 0 -- Time spent hitting toilet continuously (in frames)
-toilet_target_time = 200 -- Required continuous hit time: 5 seconds at 60fps  
-toilet_vel_x = 0 -- Toilet velocity X
-toilet_vel_y = 0 -- Toilet velocity Y
-toilet_speed = 0.8 -- Base toilet movement speed
-minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames
+-- Stream minigame variables (initialized in init_game_state())
+stream_x = nil
+stream_y = nil
+stream_length = nil
+stream_max_length = 80 -- Maximum stream length (constant)
+toilet_x = nil
+toilet_y = nil
+toilet_size = nil
+toilet_hit_time = nil
+toilet_target_time = 200 -- Required continuous hit time: 5 seconds at 60fps (constant)
+toilet_vel_x = nil
+toilet_vel_y = nil
+toilet_speed = 0.8 -- Base toilet movement speed (constant)
+minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames (constant)
 
 function update_minigame()
     if minigame_timer == 0 then
@@ -837,69 +905,7 @@ function update_game_over()
     -- Handle game over screen
     if btnp(5) then
         -- X button to restart
-        -- Reset game state
-        money = 267
-        liver_health = base_liver_health
-        intoxication = 50 -- Start in optimal range
-        total_seconds = 0
-        frames = 0
-        selected_drink_index = 1
-        selected_bonus_index = 1
-        game_over_reason = "" -- Reset game over reason
-
-        -- Reset bonuses
-        liver_protection_bonus = 0
-        liver_protection_timer = 0
-        drinking_efficiency_bonus = 0
-        drinking_efficiency_timer = 0
-        max_liver_bonus = 0
-
-        -- Reset wasted protection
-        wasted_protection_remaining = wasted_protection_uses
-        was_wasted_last_frame = false
-        wasted_total_count = 0
-        wasted_cycle_count = 0
-        wasted_timer = 0
-
-        -- Reset critical protection
-        critical_timer = 0
-        was_critical_last_frame = false
-
-        -- Reset sobriety protection
-        sobriety_timer = 0
-        last_intoxication_check = 0
-
-        -- Reset effects
-        blind_timer = 0
-        hallucination_timer = 0
-        shaking_timer = 0
-        slowmotion_timer = 0
-        inverted_controls_timer = 0
-        chaotic_movement_timer = 0
-        chaotic_last_jump_time = 0
-        blackout_timer = 0
-        minigame_timer = 0
-        minigame_target = 0
-        minigame_progress = 0
-        
-        -- Reset stream minigame variables
-        stream_x = 64
-        stream_y = 120
-        stream_length = 30
-        stream_max_length = 80
-        toilet_x = 64
-        toilet_y = 64
-        toilet_size = 2
-        toilet_hit_time = 0
-        toilet_vel_x = 0
-        toilet_vel_y = 0
-        toilet_speed = 0.8
-
-        -- Reset animation
-        character_animation_timer = 0
-        drinking_animation_trigger = false
-        drinking_animation_duration = 60
-
+        init_game_state()
         change_state(game_state.playing)
     end
 end
@@ -908,62 +914,7 @@ function update_win()
     -- Handle win screen
     if btnp(5) then
         -- X button to restart
-        -- Reset game state (same as game over)
-        money = 267
-        liver_health = base_liver_health
-        intoxication = 50
-        total_seconds = 0
-        frames = 0
-        selected_drink_index = 1
-
-        -- Reset bonuses
-        liver_protection_bonus = 0
-        liver_protection_timer = 0
-        drinking_efficiency_bonus = 0
-        drinking_efficiency_timer = 0
-        max_liver_bonus = 0
-
-        -- Reset wasted protection
-        wasted_protection_remaining = wasted_protection_uses
-        was_wasted_last_frame = false
-        wasted_total_count = 0
-        wasted_cycle_count = 0
-        wasted_timer = 0
-
-        -- Reset critical protection
-        critical_timer = 0
-        was_critical_last_frame = false
-
-        -- Reset sobriety protection
-        sobriety_timer = 0
-        last_intoxication_check = 0
-
-        -- Reset effects
-        blind_timer = 0
-        hallucination_timer = 0
-        shaking_timer = 0
-        slowmotion_timer = 0
-        inverted_controls_timer = 0
-        chaotic_movement_timer = 0
-        chaotic_last_jump_time = 0
-        blackout_timer = 0
-        minigame_timer = 0
-        minigame_target = 0
-        minigame_progress = 0
-        
-        -- Reset stream minigame variables
-        stream_x = 64
-        stream_y = 120
-        stream_length = 30
-        stream_max_length = 80
-        toilet_x = 64
-        toilet_y = 64
-        toilet_size = 2
-        toilet_hit_time = 0
-        toilet_vel_x = 0
-        toilet_vel_y = 0
-        toilet_speed = 0.8
-
+        init_game_state()
         change_state(game_state.playing)
     end
 end
