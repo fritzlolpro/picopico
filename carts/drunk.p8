@@ -60,7 +60,7 @@ was_critical_last_frame = nil
 
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
-intoxication_optimal_min = 150 -- Optimal range
+intoxication_optimal_min = 50 -- Optimal range
 intoxication_optimal_max = 400 -- Optimal range
 intoxication_wasted_threshold = 450 -- "Wasted" - penalties
 intoxication_critical = 500 -- Critical level - game over
