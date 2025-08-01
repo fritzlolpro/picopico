@@ -214,7 +214,7 @@ function on_state_change(from_state, to_state)
         music(2)
     end
     if to_state == game_state.playing then
-        music(-1)
+        music(8)
     end
 end
 
