@@ -391,7 +391,6 @@ end
 -- Effect variables
 blind_timer = 0
 hallucination_timer = 0
-liver_protection_timer = 0
 blackout_timer = 0
 shaking_timer = 0 -- For "shaking selection" effect
 slowmotion_timer = 0 -- For slowmotion effect
@@ -865,12 +864,18 @@ function update_game_over()
         critical_timer = 0
         was_critical_last_frame = false
 
+        -- Reset sobriety protection
+        sobriety_timer = 0
+        last_intoxication_check = 0
+
         -- Reset effects
         blind_timer = 0
+        hallucination_timer = 0
         shaking_timer = 0
         slowmotion_timer = 0
         inverted_controls_timer = 0
         chaotic_movement_timer = 0
+        chaotic_last_jump_time = 0
         blackout_timer = 0
         minigame_timer = 0
         minigame_target = 0
@@ -894,7 +899,7 @@ function update_game_over()
         drinking_animation_trigger = false
         drinking_animation_duration = 60
 
-        change_state(game_state.main_menu)
+        change_state(game_state.playing)
     end
 end
 
@@ -928,12 +933,18 @@ function update_win()
         critical_timer = 0
         was_critical_last_frame = false
 
+        -- Reset sobriety protection
+        sobriety_timer = 0
+        last_intoxication_check = 0
+
         -- Reset effects
         blind_timer = 0
+        hallucination_timer = 0
         shaking_timer = 0
         slowmotion_timer = 0
         inverted_controls_timer = 0
         chaotic_movement_timer = 0
+        chaotic_last_jump_time = 0
         blackout_timer = 0
         minigame_timer = 0
         minigame_target = 0
@@ -952,7 +963,7 @@ function update_win()
         toilet_vel_y = 0
         toilet_speed = 0.8
 
-        change_state(game_state.main_menu)
+        change_state(game_state.playing)
     end
 end
 
