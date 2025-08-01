@@ -1,6 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 39
+
 __lua__
+-- drunk
+-- by the0dorus
 game_state = {
     main_menu = 0,
     playing = 1,
