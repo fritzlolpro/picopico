@@ -33,6 +33,7 @@ intoxication = nil
 selected_drink_index = nil
 selected_bonus_index = nil
 game_over_reason = nil
+last_drink_index = nil -- Track last consumed drink for consecutive counting
 
 -- Character animation
 character_animation_timer = nil
@@ -137,7 +138,9 @@ drinks = {
         intoxication = 85,
         liver_damage = 11,
         effect_chance = 0.20,
-        effect_func = sanitizer_effect
+        effect_func = sanitizer_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "cologne_shipr",
@@ -146,7 +149,9 @@ drinks = {
         -- intoxication = 0,
         liver_damage = 13,
         effect_chance = 0.25,
-        effect_func = cologne_effect
+        effect_func = cologne_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "antifreeze",
@@ -154,7 +159,9 @@ drinks = {
         intoxication = 265,
         liver_damage = 17,
         effect_chance = 0.35,
-        effect_func = antifreeze_effect
+        effect_func = antifreeze_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "cognac_777",
@@ -162,7 +169,9 @@ drinks = {
         intoxication = 160,
         liver_damage = 4,
         effect_chance = 0.08,
-        effect_func = cognac_effect
+        effect_func = cognac_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "beer",
@@ -171,7 +180,9 @@ drinks = {
         liver_damage = 3,
         effect_chance = 0.20,
         -- effect_chance = 1,
-        effect_func = beer_effect
+        effect_func = beer_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "vodka",
@@ -179,7 +190,9 @@ drinks = {
         intoxication = 235,
         liver_damage = 7,
         effect_chance = 0.12,
-        effect_func = vodka_effect
+        effect_func = vodka_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     },
     {
         name = "yorsh",
@@ -187,7 +200,9 @@ drinks = {
         intoxication = 305,
         liver_damage = 7,
         effect_chance = 0.30,
-        effect_func = yorsh_effect
+        effect_func = yorsh_effect,
+        total_consumed = 0,
+        consecutive_consumed = 0
     }
 }
 
@@ -199,6 +214,7 @@ function init_game_state()
     selected_drink_index = 1
     selected_bonus_index = 1
     game_over_reason = ""
+    last_drink_index = nil -- Track last consumed drink for consecutive counting
     
     -- Time tracking
     total_seconds = 0
@@ -258,9 +274,22 @@ function init_game_state()
     toilet_speed = 0.8
 end
 
+-- Function to reset game statistics (drink consumption counters)
+function reset_game_stats()
+    -- Reset consumption statistics for all drinks
+    for i = 1, #drinks do
+        drinks[i].total_consumed = 0
+        drinks[i].consecutive_consumed = 0
+    end
+    
+    -- Reset last drink tracking
+    last_drink_index = 0
+end
+
 function _init()
     -- Initialize game state
     init_game_state()
+    reset_game_stats()
     current_state = game_state.main_menu
     
     previous_state = current_state
@@ -539,6 +568,24 @@ end
 -- Function for consuming drink with progression formulas applied
 function consume_drink(drink)
     money -= drink.price
+
+    -- Update drink statistics
+    drink.total_consumed += 1
+    
+    -- Update consecutive consumption
+    if last_drink_index == selected_drink_index then
+        -- Same drink as last time - increment consecutive counter
+        drink.consecutive_consumed += 1
+    else
+        -- Different drink - reset all consecutive counters and start new streak
+        for i = 1, #drinks do
+            drinks[i].consecutive_consumed = 0
+        end
+        drink.consecutive_consumed = 1
+    end
+    
+    -- Remember this drink for next time
+    last_drink_index = selected_drink_index
 
     -- Apply progression formulas
     local effective_intoxication = calculate_effective_intoxication(drink.intoxication)
@@ -896,6 +943,7 @@ function update_game_over()
     if btnp(5) then
         -- X button to restart
         init_game_state()
+        reset_game_stats()
         change_state(game_state.playing)
     end
 end
@@ -905,6 +953,7 @@ function update_win()
     if btnp(5) then
         -- X button to restart
         init_game_state()
+        reset_game_stats()
         change_state(game_state.playing)
     end
 end
