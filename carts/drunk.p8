@@ -3,7 +3,7 @@ version 39
 
 __lua__
 -- drunk
--- by the0dorus
+-- by fritzlolpro
 game_state = {
     main_menu = 0,
     playing = 1,
