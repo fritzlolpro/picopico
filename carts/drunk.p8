@@ -32,6 +32,10 @@ intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalt
 min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
 price_increase_per_consumption = 0.1 -- Price increase per consumption (10% per drink)
 
+-- Glitch effect constants
+glitch_intoxication_threshold = 150 -- Intoxication level when glitch effects start
+glitch_max_intensity = 300 -- Intoxication level for maximum glitch intensity
+
 -- Game variables (initialized in init_game_state())
 money = nil
 liver_health = nil
@@ -1039,9 +1043,75 @@ function draw_menu()
     print("press ❎ to start", 10, 115, 12)
 end
 
+function before_draw_game()
+    -- Calculate glitch intensity based on intoxication level
+    local glitch_intensity = 0
+    if intoxication > glitch_intoxication_threshold then
+        glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
+    end
+    
+    -- Apply glitch effects if intensity > 0
+    if glitch_intensity > 0 then
+        -- Screen shake effect
+        if rnd(1) < glitch_intensity * 0.3 then
+            camera(rnd(4) - 2, rnd(4) - 2)
+        end
+        
+        -- Random palette corruption
+        if rnd(1) < glitch_intensity * 0.1 then
+            for i = 0, 15 do
+                pal(i, flr(rnd(16)))
+            end
+        end
+    end
+end
 
+
+function after_draw_game()
+    -- Calculate glitch intensity based on intoxication level
+    local glitch_intensity = 0
+    if intoxication > glitch_intoxication_threshold then
+        glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
+    end
+    
+    -- Apply post-draw glitch effects
+    if glitch_intensity > 0 then
+        -- Random horizontal lines (scanlines corruption)
+        if rnd(1) < glitch_intensity * 0.2 then
+            for i = 1, 3 do
+                local y = flr(rnd(128))
+                local color = flr(rnd(16))
+                line(0, y, 128, y, color)
+            end
+        end
+        
+        -- Random pixel corruption
+        if rnd(1) < glitch_intensity * 0.15 then
+            for i = 1, flr(glitch_intensity * 10) do
+                local x = flr(rnd(128))
+                local y = flr(rnd(128))
+                local color = flr(rnd(16))
+                pset(x, y, color)
+            end
+        end
+        
+        -- Screen inversion (rare, strong effect)
+        if rnd(1) < glitch_intensity * 0.05 then
+            for x = 0, 127 do
+                for y = 0, 127 do
+                    local current_color = pget(x, y)
+                    pset(x, y, 15 - current_color)
+                end
+            end
+        end
+    end
+    
+    -- Reset camera and palette after glitch effects
+    camera(0, 0)
+    pal()
+end
 function draw_game()
-   
+    before_draw_game()
     local first_row_text_y = 1
     local first_row_sprite_y = 0
 
@@ -1252,6 +1322,8 @@ function draw_game()
         cls(0)
         print("blackout", 35, 64, 8)
     end
+
+    after_draw_game()
 end
 
 function draw_minigame()
