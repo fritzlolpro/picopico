@@ -589,7 +589,7 @@ function consume_drink(drink)
 
     -- Apply progression formulas
     local effective_intoxication = calculate_effective_intoxication(drink.intoxication)
-    local effective_liver_damage = calculate_effective_liver_damage(drink.liver_damage)
+    local effective_liver_damage = calculate_effective_liver_damage(drink)
 
     -- Apply effects
     intoxication += effective_intoxication
@@ -624,10 +624,17 @@ function calculate_effective_intoxication(base_intoxication)
 end
 
 -- Liver damage increase formula
-function calculate_effective_liver_damage(base_damage)
+function calculate_effective_liver_damage(drink)
+    local base_damage = drink.liver_damage
+    local total_consumed = drink.total_consumed
+    
     local damage_multiplier = 1 + (liver_damage_factor * total_seconds)
     -- +0.1833% damage each second
-    local final_damage = base_damage * damage_multiplier
+    
+    -- Add 1% damage increase for each time this specific drink was consumed
+    local consumption_multiplier = 1 + (total_consumed * 0.01)
+    
+    local final_damage = base_damage * damage_multiplier * consumption_multiplier
 
     -- Apply liver protection if active
     if liver_protection_timer > 0 then
@@ -1191,7 +1198,7 @@ function draw_game()
     local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
     local drunk_penalty = get_drunk_penalty()
     local total_effectiveness = flr(effectiveness * drunk_penalty)
-    print("efficiency: " .. total_effectiveness .. "%", 5, drink_info_y + 20, 5)
+    print("tolerance: " .. total_effectiveness .. "%", 5, drink_info_y + 20, 5)
 
     -- Show wasted cycle info if any cycles completed
     if wasted_cycle_count > 0 then
