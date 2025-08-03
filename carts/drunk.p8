@@ -633,8 +633,9 @@ function calculate_effective_intoxication(drink)
     local base_intoxication = drink.intoxication
     local consecutive_consumed = drink.consecutive_consumed
     
-    local effectiveness = 1 - (tolerance_factor * total_seconds)
-    -- -0.15% effectiveness each second
+    local tolerance_level = tolerance_factor * total_seconds
+    local effectiveness = 1 - tolerance_level
+    -- Tolerance grows by +0.15% each second, effectiveness decreases accordingly
     
     -- Reduce effectiveness for consecutive consumption of the same drink
     local consecutive_penalty = 1 - ((consecutive_consumed - 1) * intoxication_penalty_per_consecutive)
@@ -1224,11 +1225,11 @@ function draw_game()
     print(drink.name .. " - " .. flr(drink.price) .. "r", 5, drink_info_y, color)
     print("drunk+" .. drink.intoxication .. " liver dmg+" .. drink.liver_damage, 5, drink_info_y + 10, 6)
 
-    -- Efficiency progression
-    local effectiveness = flr((1 - (tolerance_factor * total_seconds)) * 100)
+    -- Tolerance progression (grows over time)
+    local tolerance_level = flr((tolerance_factor * total_seconds) * 100)
     local drunk_penalty = get_drunk_penalty()
-    local total_effectiveness = flr(effectiveness * drunk_penalty)
-    print("tolerance: " .. total_effectiveness .. "%", 5, drink_info_y + 20, 5)
+    local total_tolerance = flr(tolerance_level * drunk_penalty)
+    print("tolerance: " .. total_tolerance .. "%", 5, drink_info_y + 20, 5)
 
     -- Show wasted cycle info if any cycles completed
     if wasted_cycle_count > 0 then
