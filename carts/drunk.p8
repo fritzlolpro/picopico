@@ -185,7 +185,7 @@ drinks = {
         base_price = 89,
         price = 89,
         intoxication = 160,
-        liver_damage = 4,
+        liver_damage = 14,
         effect_chance = 0.08,
         effect_func = cognac_effect,
         total_consumed = 0,
@@ -1108,6 +1108,11 @@ function glitch_pixel_corruption(intensity)
             pset(x, y, color)
         end
     end
+
+    if wasted_timer > 0 and rnd(1) <= 0.5 then
+        -- Apply additional glitch effects when wasted
+        glitch_scanlines(1.0)
+    end
 end
 
 function glitch_screen_inversion(intensity)
@@ -1458,8 +1463,8 @@ function draw_payday()
     cls(0)
     print("payday!", 35, 10, 7)
     print("salary: " .. salary .. "r", 30, 20, 6)
-    print("money: " .. money .. "r", 30, 30, 7)
-    
+    print("money: " .. flr(money) .. "r", 30, 30, 7)
+
     -- Draw bonus icons in 3x2 grid
     local start_x = 20
     local start_y = 45
