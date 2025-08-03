@@ -27,7 +27,7 @@ tolerance_factor = 0.0015 -- Alcohol effectiveness decrease over time (-0.15% ef
 drinking_frequency = 5 -- How often character drinks a shot in seconds
 
 -- Consumption progression constants
-liver_damage_per_consumption = 0.02 -- Liver damage increase per consumption (2% per drink)
+liver_damage_per_consumption = 0.01 -- Liver damage increase per consumption (1% per drink)
 intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalty per consecutive drink (5% per drink)
 min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
 price_increase_per_consumption = 0.1 -- Price increase per consumption (10% per drink)
@@ -142,7 +142,10 @@ end
 function yorsh_effect()
     -- Chaotic frame (moves randomly)
     chaotic_movement_timer = 480
-    -- 8 seconds at 60fps
+    if rnd(1, 100) <= 80 then
+        change_state(game_state.minigame)
+    end
+    
 end
 
 drinks = {
@@ -151,7 +154,7 @@ drinks = {
         base_price = 13,
         price = 13,
         intoxication = 85,
-        liver_damage = 15,
+        liver_damage = 11,
         effect_chance = 0.20,
         effect_func = sanitizer_effect,
         total_consumed = 0,
@@ -163,9 +166,8 @@ drinks = {
         price = 21,
         intoxication = 145,
         -- intoxication = 0,
-        liver_damage = 19,
+        liver_damage = 11,
         effect_chance = 0.25,
-        -- effect_chance = 1,
         effect_func = cologne_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -175,7 +177,7 @@ drinks = {
         base_price = 43,
         price = 43,
         intoxication = 265,
-        liver_damage = 18,
+        liver_damage = 13,
         effect_chance = 0.35,
         effect_func = antifreeze_effect,
         total_consumed = 0,
@@ -186,7 +188,7 @@ drinks = {
         base_price = 89,
         price = 89,
         intoxication = 160,
-        liver_damage = 16,
+        liver_damage = 6,
         effect_chance = 0.08,
         effect_func = cognac_effect,
         total_consumed = 0,
@@ -197,7 +199,7 @@ drinks = {
         base_price = 29,
         price = 29,
         intoxication = 65,
-        liver_damage = 6,
+        liver_damage = 3,
         effect_chance = 0.20,
         -- effect_chance = 1,
         effect_func = beer_effect,
@@ -209,9 +211,8 @@ drinks = {
         base_price = 67,
         price = 67,
         intoxication = 235,
-        liver_damage = 17,
+        liver_damage = 7,
         effect_chance = 0.12,
-        -- effect_chance = 1,
         effect_func = vodka_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -221,7 +222,7 @@ drinks = {
         base_price = 73,
         price = 73,
         intoxication = 305,
-        liver_damage = 15,
+        liver_damage = 6,
         effect_chance = 0.30,
         effect_func = yorsh_effect,
         total_consumed = 0,
@@ -873,11 +874,11 @@ toilet_x = nil
 toilet_y = nil
 toilet_size = nil
 toilet_hit_time = nil
-toilet_target_time = 200 -- Required continuous hit time: 5 seconds at 60fps (constant)
+toilet_target_time = 2 * 60 -- Target time to hit toilet in frames (2 seconds)
 toilet_vel_x = nil
 toilet_vel_y = nil
 toilet_speed = 0.8 -- Base toilet movement speed (constant)
-minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames (constant)
+minigame_game_length = 10 * 60 -- Total mini-game length: 10 seconds in frames (constant)
 
 function update_minigame()
     if minigame_timer == 0 then
@@ -1427,10 +1428,14 @@ function draw_game()
     after_draw_game()
 end
 
+function after_draw_minigame()
+    
+end
+
 function draw_minigame()
     cls(1)
     print("bathroom emergency!", 20, 5, 7)
-    print("hit toilet for 5 seconds!", 15, 15, 8)
+    print("hit toilet for " .. flr(toilet_target_time/60) .. " seconds!", 15, 15, 8)
     map(0, 0, 0, 32, 16, 10)
     -- Draw toilet sprite (moving and resizing)
     local toilet_sprite_id = 12 -- Assuming sprite 12 is your toilet
