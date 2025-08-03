@@ -135,7 +135,7 @@ end
 
 function vodka_effect()
     -- Blackout 2 sec (controls don't work)
-    blackout_timer = 220
+    blackout_timer = 360
     -- 2 seconds at 60fps
 end
 
@@ -210,7 +210,8 @@ drinks = {
         price = 67,
         intoxication = 235,
         liver_damage = 17,
-        effect_chance = 0.12,
+        -- effect_chance = 0.12,
+        effect_chance = 1,
         effect_func = vodka_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -1123,6 +1124,11 @@ function glitch_pixel_corruption(intensity)
     if wasted_timer > 0 and rnd(1) <= 0.5 then
         -- Apply additional glitch effects when wasted
         glitch_scanlines(1.0)
+    end
+
+    if blackout_timer > 0 then
+        -- Apply blackout effect
+        glitch_screen_inversion(1.0)
     end
 end
 
