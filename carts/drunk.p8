@@ -210,8 +210,8 @@ drinks = {
         price = 67,
         intoxication = 235,
         liver_damage = 17,
-        -- effect_chance = 0.12,
-        effect_chance = 1,
+        effect_chance = 0.12,
+        -- effect_chance = 1,
         effect_func = vodka_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -499,8 +499,8 @@ function update_time()
         
         
 
-        -- Apply sobering (not affected by slowmotion)
-        if total_seconds % sobering_frequency == 0 then
+        -- Apply sobering (not affected by slowmotion, blocked during blackout)
+        if total_seconds % sobering_frequency == 0 and blackout_timer <= 0 then
             update_sobering()
         end
         -- Salary every SALARY_FREQUENCY seconds (not affected by slowmotion)
@@ -588,7 +588,19 @@ function update_effects()
 
     if blackout_timer > 0 then
         blackout_timer -= 1
-        -- During blackout, skip game updates
+        
+        -- On the last frame of blackout, apply blackout consequences
+        if blackout_timer == 0 then
+            -- Set intoxication to wasted threshold
+            intoxication = intoxication_wasted_threshold
+            -- Halve the money
+            money = flr(money / 2)
+            -- Damage liver by 10% of current health
+            local liver_damage = liver_health * 0.1
+            liver_health -= liver_damage
+        end
+        
+        -- During blackout, block drinking and sobering
         return true
     end
 
@@ -768,6 +780,11 @@ end
 
 
 function can_auto_drink()
+    -- No drinking during blackout
+    if blackout_timer > 0 then
+        return false
+    end
+    
     local is_wasted = intoxication >= intoxication_wasted_threshold or wasted_timer > 0
     local is_critical = intoxication >= intoxication_critical or critical_timer > 0
     
@@ -1121,15 +1138,9 @@ function glitch_pixel_corruption(intensity)
         end
     end
 
-    if wasted_timer > 0 and rnd(1) <= 0.5 then
-        -- Apply additional glitch effects when wasted
-        glitch_scanlines(1.0)
-    end
 
-    if blackout_timer > 0 then
-        -- Apply blackout effect
-        glitch_screen_inversion(1.0)
-    end
+
+  
 end
 
 function glitch_screen_inversion(intensity)
@@ -1180,8 +1191,16 @@ function after_draw_game()
     if glitch_intensity > 0 then
         glitch_pixel_corruption(glitch_intensity)
     end
-    
 
+    if blackout_timer > 0 then
+        -- Apply blackout effect
+        glitch_screen_inversion(1.0)
+    end
+
+    if wasted_timer > 0 and rnd(1) <= 0.5 then
+        -- Apply additional glitch effects when wasted
+        glitch_scanlines(1.0)
+    end
 
     -- Always reset effects at the end
     glitch_reset_effects()
