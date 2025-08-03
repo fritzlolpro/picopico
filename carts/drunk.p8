@@ -1043,6 +1043,64 @@ function draw_menu()
     print("press ❎ to start", 10, 115, 12)
 end
 
+-- Individual glitch effect functions (call during draw phase)
+function glitch_screen_shake(intensity)
+    -- Screen shake effect - call before main drawing
+    if rnd(1) < intensity * 0.3 then
+        camera(rnd(4) - 2, rnd(4) - 2)
+    end
+end
+
+function glitch_palette_corruption(intensity)
+    -- Random palette corruption - call before main drawing
+    if rnd(1) < intensity * 0.1 then
+        for i = 0, 15 do
+            pal(i, flr(rnd(16)))
+        end
+    end
+end
+
+function glitch_scanlines(intensity)
+    -- Random horizontal lines - call after main drawing
+    if rnd(1) < intensity * 0.2 then
+        for i = 1, 3 do
+            local y = flr(rnd(128))
+            local color = flr(rnd(16))
+            line(0, y, 128, y, color)
+        end
+    end
+end
+
+function glitch_pixel_corruption(intensity)
+    -- Random pixel corruption - call after main drawing
+    if rnd(1) < intensity * 0.15 then
+        for i = 1, flr(intensity * 10) do
+            local x = flr(rnd(128))
+            local y = flr(rnd(128))
+            local color = flr(rnd(16))
+            pset(x, y, color)
+        end
+    end
+end
+
+function glitch_screen_inversion(intensity)
+    -- Full screen color inversion - call after main drawing
+    if rnd(1) < intensity * 0.05 then
+        for x = 0, 127 do
+            for y = 0, 127 do
+                local current_color = pget(x, y)
+                pset(x, y, 15 - current_color)
+            end
+        end
+    end
+end
+
+function glitch_reset_effects()
+    -- Reset camera and palette - call at end of draw phase
+    camera(0, 0)
+    pal()
+end
+
 function before_draw_game()
     -- Calculate glitch intensity based on intoxication level
     local glitch_intensity = 0
@@ -1050,19 +1108,10 @@ function before_draw_game()
         glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
     end
     
-    -- Apply glitch effects if intensity > 0
+    -- Apply pre-draw glitch effects
     if glitch_intensity > 0 then
-        -- Screen shake effect
-        if rnd(1) < glitch_intensity * 0.3 then
-            camera(rnd(4) - 2, rnd(4) - 2)
-        end
-        
-        -- Random palette corruption
-        if rnd(1) < glitch_intensity * 0.1 then
-            for i = 0, 15 do
-                pal(i, flr(rnd(16)))
-            end
-        end
+        glitch_screen_shake(glitch_intensity)
+        glitch_palette_corruption(glitch_intensity)
     end
 end
 
@@ -1076,39 +1125,13 @@ function after_draw_game()
     
     -- Apply post-draw glitch effects
     if glitch_intensity > 0 then
-        -- Random horizontal lines (scanlines corruption)
-        if rnd(1) < glitch_intensity * 0.2 then
-            for i = 1, 3 do
-                local y = flr(rnd(128))
-                local color = flr(rnd(16))
-                line(0, y, 128, y, color)
-            end
-        end
-        
-        -- Random pixel corruption
-        if rnd(1) < glitch_intensity * 0.15 then
-            for i = 1, flr(glitch_intensity * 10) do
-                local x = flr(rnd(128))
-                local y = flr(rnd(128))
-                local color = flr(rnd(16))
-                pset(x, y, color)
-            end
-        end
-        
-        -- Screen inversion (rare, strong effect)
-        if rnd(1) < glitch_intensity * 0.05 then
-            for x = 0, 127 do
-                for y = 0, 127 do
-                    local current_color = pget(x, y)
-                    pset(x, y, 15 - current_color)
-                end
-            end
-        end
+        glitch_scanlines(glitch_intensity)
+        glitch_pixel_corruption(glitch_intensity)
+        glitch_screen_inversion(glitch_intensity)
     end
     
-    -- Reset camera and palette after glitch effects
-    camera(0, 0)
-    pal()
+    -- Always reset effects at the end
+    glitch_reset_effects()
 end
 function draw_game()
     before_draw_game()
