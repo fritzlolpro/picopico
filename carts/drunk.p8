@@ -30,6 +30,7 @@ drinking_frequency = 5 -- How often character drinks a shot in seconds
 liver_damage_per_consumption = 0.01 -- Liver damage increase per consumption (1% per drink)
 intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalty per consecutive drink (5% per drink)
 min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
+price_increase_per_consumption = 0.1 -- Price increase per consumption (10% per drink)
 
 -- Game variables (initialized in init_game_state())
 money = nil
@@ -139,6 +140,7 @@ end
 drinks = {
     {
         name = "sanitizer",
+        base_price = 13,
         price = 13,
         intoxication = 85,
         liver_damage = 11,
@@ -149,6 +151,7 @@ drinks = {
     },
     {
         name = "cologne_shipr",
+        base_price = 21,
         price = 21,
         intoxication = 145,
         -- intoxication = 0,
@@ -160,6 +163,7 @@ drinks = {
     },
     {
         name = "antifreeze",
+        base_price = 43,
         price = 43,
         intoxication = 265,
         liver_damage = 17,
@@ -170,6 +174,7 @@ drinks = {
     },
     {
         name = "cognac_777",
+        base_price = 89,
         price = 89,
         intoxication = 160,
         liver_damage = 4,
@@ -180,6 +185,7 @@ drinks = {
     },
     {
         name = "beer",
+        base_price = 29,
         price = 29,
         intoxication = 65,
         liver_damage = 3,
@@ -191,6 +197,7 @@ drinks = {
     },
     {
         name = "vodka",
+        base_price = 67,
         price = 67,
         intoxication = 235,
         liver_damage = 7,
@@ -201,6 +208,7 @@ drinks = {
     },
     {
         name = "yorsh",
+        base_price = 73,
         price = 73,
         intoxication = 305,
         liver_damage = 7,
@@ -285,10 +293,18 @@ function reset_game_stats()
     for i = 1, #drinks do
         drinks[i].total_consumed = 0
         drinks[i].consecutive_consumed = 0
+        drinks[i].price = drinks[i].base_price
     end
     
     -- Reset last drink tracking
     last_drink_index = 0
+end
+
+-- Function to reset drink prices to base values
+function reset_drink_prices()
+    for i = 1, #drinks do
+        drinks[i].price = drinks[i].base_price
+    end
 end
 
 function _init()
@@ -591,6 +607,9 @@ function consume_drink(drink)
     
     -- Remember this drink for next time
     last_drink_index = selected_drink_index
+
+    -- Update drink price (increase by percentage each consumption)
+    drink.price = drink.base_price * (1 + drink.total_consumed * price_increase_per_consumption)
 
     -- Apply progression formulas
     local effective_intoxication = calculate_effective_intoxication(drink)
@@ -929,12 +948,10 @@ function update_payday()
         if money >= selected_bonus.cost then
             money -= selected_bonus.cost
             apply_bonus_effect(selected_bonus)
-            change_state(game_state.playing)
         end
-        -- If not enough money, just continue without bonus
-        if money < selected_bonus.cost then
-            change_state(game_state.playing)
-        end
+        -- Reset drink prices for new payday period
+        reset_drink_prices()
+        change_state(game_state.playing)
     end
 end
 
