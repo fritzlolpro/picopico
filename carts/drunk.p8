@@ -27,7 +27,7 @@ tolerance_factor = 0.0015 -- Alcohol effectiveness decrease over time (-0.15% ef
 drinking_frequency = 5 -- How often character drinks a shot in seconds
 
 -- Consumption progression constants
-liver_damage_per_consumption = 0.01 -- Liver damage increase per consumption (1% per drink)
+liver_damage_per_consumption = 0.02 -- Liver damage increase per consumption (2% per drink)
 intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalty per consecutive drink (5% per drink)
 min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
 price_increase_per_consumption = 0.1 -- Price increase per consumption (10% per drink)
@@ -57,21 +57,21 @@ was_wasted_last_frame = nil
 wasted_overflow_liver_damage = 50 -- Base liver damage when entering wasted after protection is exhausted
 wasted_total_count = nil
 wasted_cycle_count = nil
-wasted_duration = 600 -- How long to stay in wasted state (10 seconds at 60fps)
+wasted_duration = 300 -- How long to stay in wasted state (5 seconds at 60fps)
 wasted_timer = nil
 
 -- Critical protection mechanism
 critical_duration = 600 -- How long to stay in critical state (10 seconds at 60fps)
 critical_timer = nil
-critical_liver_damage = 200 -- Liver damage when critical timer expires
+critical_liver_damage = 500 -- Liver damage when critical timer expires
 was_critical_last_frame = nil
 
 -- Intoxication parameters
 intoxication_min_threshold = 0 -- Below this - game over
 intoxication_optimal_min = 60 -- Optimal range
 intoxication_optimal_max = 400 -- Optimal range
-intoxication_wasted_threshold = 450 -- "Wasted" - penalties
-intoxication_critical = 500 -- Critical level - game over
+intoxication_wasted_threshold = 430 -- "Wasted" - penalties
+intoxication_critical = 480 -- Critical level - game over
 
 
 -- Glitch effect constants
@@ -151,7 +151,7 @@ drinks = {
         base_price = 13,
         price = 13,
         intoxication = 85,
-        liver_damage = 11,
+        liver_damage = 15,
         effect_chance = 0.20,
         effect_func = sanitizer_effect,
         total_consumed = 0,
@@ -163,9 +163,9 @@ drinks = {
         price = 21,
         intoxication = 145,
         -- intoxication = 0,
-        liver_damage = 13,
-        -- effect_chance = 0.25,
-        effect_chance = 1,
+        liver_damage = 19,
+        effect_chance = 0.25,
+        -- effect_chance = 1,
         effect_func = cologne_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -175,7 +175,7 @@ drinks = {
         base_price = 43,
         price = 43,
         intoxication = 265,
-        liver_damage = 17,
+        liver_damage = 18,
         effect_chance = 0.35,
         effect_func = antifreeze_effect,
         total_consumed = 0,
@@ -186,7 +186,7 @@ drinks = {
         base_price = 89,
         price = 89,
         intoxication = 160,
-        liver_damage = 14,
+        liver_damage = 16,
         effect_chance = 0.08,
         effect_func = cognac_effect,
         total_consumed = 0,
@@ -197,7 +197,7 @@ drinks = {
         base_price = 29,
         price = 29,
         intoxication = 65,
-        liver_damage = 3,
+        liver_damage = 6,
         effect_chance = 0.20,
         -- effect_chance = 1,
         effect_func = beer_effect,
@@ -209,7 +209,7 @@ drinks = {
         base_price = 67,
         price = 67,
         intoxication = 235,
-        liver_damage = 7,
+        liver_damage = 17,
         effect_chance = 0.12,
         effect_func = vodka_effect,
         total_consumed = 0,
@@ -220,7 +220,7 @@ drinks = {
         base_price = 73,
         price = 73,
         intoxication = 305,
-        liver_damage = 7,
+        liver_damage = 15,
         effect_chance = 0.30,
         effect_func = yorsh_effect,
         total_consumed = 0,
@@ -370,7 +370,7 @@ end
 function _update60()
     -- Check for state changes
     check_state_change()
-    
+    check_game_conditions()
     -- Handle payday state first
     if current_state == game_state.payday then
         update_payday()
@@ -1364,7 +1364,12 @@ function draw_game()
     local drink = drinks[selected_drink_index]
     local color = money >= drink.price and 11 or 8
     print(drink.name .. " - " .. flr(drink.price) .. "r", 5, drink_info_y, color)
-    print("drunk+" .. drink.intoxication .. " liver dmg+" .. drink.liver_damage, 5, drink_info_y + 10, 6)
+    
+    -- Calculate effective values for display (without modifying drink object)
+    local effective_intoxication = calculate_effective_intoxication(drink)
+    local effective_liver_damage = calculate_effective_liver_damage(drink)
+    
+    print("drunk+" .. flr(effective_intoxication) .. " liver dmg+" .. flr(effective_liver_damage), 5, drink_info_y + 10, 6)
 
     -- Tolerance progression (grows over time)
     local tolerance_level = flr((tolerance_factor * total_seconds) * 100)
