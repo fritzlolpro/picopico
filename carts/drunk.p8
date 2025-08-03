@@ -500,8 +500,8 @@ function update_time()
         
         
 
-        -- Apply sobering (not affected by slowmotion, blocked during blackout)
-        if total_seconds % sobering_frequency == 0 and blackout_timer <= 0 then
+        -- Apply sobering (not affected by slowmotion, blocked during blackout and minigame)
+        if total_seconds % sobering_frequency == 0 and blackout_timer <= 0 and current_state ~= game_state.minigame then
             update_sobering()
         end
         -- Salary every SALARY_FREQUENCY seconds (not affected by slowmotion)
@@ -879,6 +879,7 @@ toilet_vel_x = nil
 toilet_vel_y = nil
 toilet_speed = 0.8 -- Base toilet movement speed (constant)
 minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames (constant)
+minigame_sobriety_reduction = 0.2 -- Reduce sobriety by 20% after completing minigame
 
 function update_minigame()
     if minigame_timer == 0 then
@@ -960,12 +961,16 @@ function update_minigame()
     if toilet_hit_time >= toilet_target_time then
         -- Success - player hit continuously for required time
         liver_health += 100
+        -- Reduce sobriety after completing minigame
+        intoxication -= intoxication * minigame_sobriety_reduction
         minigame_timer = 0
         change_state(game_state.playing)
     elseif minigame_timer <= 0 then
         -- Failure - lose liver health
-        intoxication -= 100
-        liver_health -= 500
+        
+        liver_health -= 200
+        -- Reduce sobriety after completing minigame (even on failure)
+        intoxication -= intoxication * minigame_sobriety_reduction
         minigame_timer = 0
         change_state(game_state.playing)
     end
