@@ -48,7 +48,7 @@ drinking_animation_trigger = nil
 drinking_animation_duration = 60 -- Duration of drinking animation (1 second)
 
 -- Slowmotion effect
-slow_motion_multiplier = 2 -- How much slower time goes during slowmotion
+slow_motion_multiplier = 4 -- How much slower time goes during slowmotion
 
 -- Wasted protection mechanism
 wasted_protection_uses = 3 -- How many times player can be saved from auto-drinking when wasted
@@ -111,7 +111,7 @@ end
 
 function cologne_effect()
     -- Slowmotion 4 sec (slow frame movement)
-    slowmotion_timer = 240
+    slowmotion_timer = 600
     -- 4 seconds at 60fps
 end
 
@@ -164,7 +164,8 @@ drinks = {
         intoxication = 145,
         -- intoxication = 0,
         liver_damage = 13,
-        effect_chance = 0.25,
+        -- effect_chance = 0.25,
+        effect_chance = 1,
         effect_func = cologne_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -1140,6 +1141,14 @@ function before_draw_game()
     if shaking_timer > 0 then
         -- Apply screen shake effect for specific events
         glitch_screen_shake(1.0)
+    end
+
+    if slowmotion_timer > 0 then
+        -- Apply slow-motion effect (e.g. draw at half speed)
+        if frames % slow_motion_multiplier == 0 then
+            glitch_palette_corruption(1)
+            return
+        end
     end
 end
 
