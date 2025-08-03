@@ -1053,8 +1053,8 @@ function draw_game()
     -- Main information
     local money_id = 52
     spr(money_id, 5, first_row_sprite_y)
-    print(money, 15, first_row_text_y, 7)
-    
+    print(flr(money), 15, first_row_text_y, 7)
+
     -- Salary countdown
     local time_to_salary = salary_frequency - (total_seconds % salary_frequency)
     print("salary in: " .. time_to_salary .. "s", 5, first_row_text_y + 8, 7)
@@ -1221,7 +1221,7 @@ function draw_game()
     -- Show selected drink info below sprites
     local drink = drinks[selected_drink_index]
     local color = money >= drink.price and 11 or 8
-    print(drink.name .. " - " .. drink.price .. "r", 5, drink_info_y, color)
+    print(drink.name .. " - " .. flr(drink.price) .. "r", 5, drink_info_y, color)
     print("drunk+" .. drink.intoxication .. " liver dmg+" .. drink.liver_damage, 5, drink_info_y + 10, 6)
 
     -- Efficiency progression
