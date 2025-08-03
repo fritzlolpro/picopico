@@ -1102,37 +1102,45 @@ function glitch_reset_effects()
 end
 
 function before_draw_game()
-    -- Calculate glitch intensity based on intoxication level
-    local glitch_intensity = 0
-    if intoxication > glitch_intoxication_threshold then
-        glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
-    end
+    -- -- Calculate glitch intensity based on intoxication level
+    -- local glitch_intensity = 0
+    -- if intoxication > glitch_intoxication_threshold then
+    --     glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
+    -- end
     
-    -- Apply pre-draw glitch effects
-    if glitch_intensity > 0 then
-        glitch_screen_shake(glitch_intensity)
-        glitch_palette_corruption(glitch_intensity)
+    -- -- Apply pre-draw glitch effects
+    -- if glitch_intensity > 0 then
+    --     glitch_screen_shake(glitch_intensity)
+    --     glitch_palette_corruption(glitch_intensity)
+    -- end
+
+    if shaking_timer > 0 then
+        -- Apply screen shake effect
+        glitch_screen_shake(1.0)
     end
 end
 
 
 function after_draw_game()
-    -- Calculate glitch intensity based on intoxication level
-    local glitch_intensity = 0
-    if intoxication > glitch_intoxication_threshold then
-        glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
-    end
+    -- -- Calculate glitch intensity based on intoxication level
+    -- local glitch_intensity = 0
+    -- if intoxication > glitch_intoxication_threshold then
+    --     glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
+    -- end
     
-    -- Apply post-draw glitch effects
-    if glitch_intensity > 0 then
-        glitch_scanlines(glitch_intensity)
-        glitch_pixel_corruption(glitch_intensity)
-        glitch_screen_inversion(glitch_intensity)
-    end
+    -- -- Apply post-draw glitch effects
+    -- if glitch_intensity > 0 then
+    --     glitch_scanlines(glitch_intensity)
+    --     glitch_pixel_corruption(glitch_intensity)
+    --     glitch_screen_inversion(glitch_intensity)
+    -- end
     
+
+
     -- Always reset effects at the end
     glitch_reset_effects()
 end
+
 function draw_game()
     before_draw_game()
     local first_row_text_y = 1
