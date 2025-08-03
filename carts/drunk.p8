@@ -279,6 +279,9 @@ function init_game_state()
     chaotic_movement_timer = 0
     chaotic_last_jump_time = 0
     
+    -- Drinking timing (separate from game time to handle slowmotion correctly)
+    next_drink_timer = drinking_frequency * 60 -- Convert to frames for precise timing
+    
     -- Minigame variables
     minigame_timer = 0
     minigame_target = 0
@@ -481,13 +484,9 @@ function update_time()
     
     frames += 1
     
-    -- Calculate effective frame rate (slower during slowmotion)
-    local effective_frame_rate = 60
-    if slowmotion_timer > 0 then
-        effective_frame_rate = 60 * slow_motion_multiplier
-    end
-    
-    if frames >= effective_frame_rate then
+    -- Game time always runs at normal speed (60 FPS)
+    -- Slowmotion only affects drinking frequency, not game time
+    if frames >= 60 then
         frames = 0
         total_seconds += 1
 
@@ -499,18 +498,11 @@ function update_time()
         
         
 
-        -- Automatic alcohol consumption every DRINKING_FREQUENCY seconds
-        -- Use wasted protection mechanism
-        if total_seconds % drinking_frequency == 0 and current_state == game_state.playing and can_auto_drink() then
-            drink_alcohol()
-            drinking_animation_trigger = true -- Trigger drinking animation
-        end
-
-        -- Apply sobering
+        -- Apply sobering (not affected by slowmotion)
         if total_seconds % sobering_frequency == 0 then
             update_sobering()
         end
-        -- Salary every SALARY_FREQUENCY seconds
+        -- Salary every SALARY_FREQUENCY seconds (not affected by slowmotion)
         if total_seconds % salary_frequency == 0 then
             money += salary
             trigger_payday()
@@ -527,11 +519,29 @@ slowmotion_timer = nil
 inverted_controls_timer = nil
 chaotic_movement_timer = nil
 chaotic_last_jump_time = nil
+next_drink_timer = nil -- Timer for next automatic drink (in frames)
 
 -- Update effect timers
 function update_effects()
     if blind_timer > 0 then
         blind_timer -= 1
+    end
+
+    -- Update drinking timer (affected by slowmotion)
+    if current_state == game_state.playing then
+        local drink_rate = 1
+        if slowmotion_timer > 0 then
+            drink_rate = 1 / slow_motion_multiplier -- Slower drinking during slowmotion
+        end
+        
+        next_drink_timer -= drink_rate
+        
+        -- Check if it's time to drink
+        if next_drink_timer <= 0 and can_auto_drink() then
+            drink_alcohol()
+            drinking_animation_trigger = true
+            next_drink_timer = drinking_frequency * 60 -- Reset timer
+        end
     end
 
     if shaking_timer > 0 then
@@ -1191,8 +1201,8 @@ function draw_game()
     local time_to_salary = salary_frequency - (total_seconds % salary_frequency)
     print("salary in: " .. time_to_salary .. "s", 5, first_row_text_y + 8, 7)
     
-    -- Next sip countdown
-    local time_to_sip = drinking_frequency - (total_seconds % drinking_frequency)
+    -- Next sip countdown (uses frame-based timer for slowmotion accuracy)
+    local time_to_sip = max(0, flr(next_drink_timer / 60))
     print("sip in: " .. time_to_sip .. "s", 5, first_row_text_y + 16, 6)
 
     local time_id = 54
