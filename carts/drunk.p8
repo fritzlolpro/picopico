@@ -200,8 +200,8 @@ drinks = {
         price = 29,
         intoxication = 65,
         liver_damage = 3,
-        -- effect_chance = 0.20,
-        effect_chance = 1,
+        effect_chance = 0.20,
+        -- effect_chance = 1,
         effect_func = beer_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -1212,6 +1212,33 @@ function after_draw_game()
     glitch_reset_effects()
 end
 
+-- Draw drinking fireworks effect
+function draw_drinking_fireworks(center_x, center_y)
+    -- Create white pixel fireworks during drinking animation
+    local fireworks_intensity = (60 - drinking_animation_duration) / 60 -- Intensity grows over time
+    local particle_count = flr(fireworks_intensity * 12) + 3 -- 3-15 particles
+    
+    for i = 1, particle_count do
+        -- Random angle and distance for each particle
+        local angle = rnd(1) * 6.28 -- Random angle (0 to 2π)
+        local distance = fireworks_intensity * 20 + rnd(10) -- Distance grows with time
+        
+        -- Calculate particle position
+        local px = center_x + cos(angle) * distance
+        local py = center_y + sin(angle) * distance
+        
+        -- Only draw if particle is on screen
+        if px >= 0 and px < 128 and py >= 0 and py < 128 then
+            -- White particles with occasional bright colors
+            local color = 7 -- Default white
+            if rnd(1) < 0.2 then
+                color = 10 -- Occasional yellow for variety
+            end
+            pset(px, py, color)
+        end
+    end
+end
+
 function draw_game()
     before_draw_game()
     local first_row_text_y = 1
@@ -1314,6 +1341,11 @@ function draw_game()
     end
 
     spr(current_char_sprite, 78, third_row_sprite_y, 2, 2)
+    
+    -- Draw drinking fireworks effect during drinking animation
+    if drinking_animation_trigger then
+        draw_drinking_fireworks(78 + 8, third_row_sprite_y + 8) -- Center of character sprite
+    end
 
     local intox_color = get_intoxication_color()
     print("drunk: " .. flr(intoxication), 68, third_row_sprite_y + 17, intox_color)
