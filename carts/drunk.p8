@@ -32,9 +32,6 @@ intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalt
 min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
 price_increase_per_consumption = 0.1 -- Price increase per consumption (10% per drink)
 
--- Glitch effect constants
-glitch_intoxication_threshold = 150 -- Intoxication level when glitch effects start
-glitch_max_intensity = 300 -- Intoxication level for maximum glitch intensity
 
 -- Game variables (initialized in init_game_state())
 money = nil
@@ -75,6 +72,13 @@ intoxication_optimal_min = 60 -- Optimal range
 intoxication_optimal_max = 400 -- Optimal range
 intoxication_wasted_threshold = 450 -- "Wasted" - penalties
 intoxication_critical = 500 -- Critical level - game over
+
+
+-- Glitch effect constants
+glitch_intoxication_threshold = 100 -- Intoxication level when pixel corruption starts
+glitch_medium_threshold = 170 -- Medium intensity pixel corruption
+glitch_high_threshold = 250 -- High intensity with chaotic corruption
+glitch_max_intensity = 300 -- Maximum glitch intensity
 
 -- Payday bonuses
 payday_bonuses = {
@@ -1072,12 +1076,35 @@ function glitch_scanlines(intensity)
 end
 
 function glitch_pixel_corruption(intensity)
-    -- Random pixel corruption - call after main drawing
-    if rnd(1) < intensity * 0.15 then
-        for i = 1, flr(intensity * 10) do
+    -- Enhanced pixel corruption based on intoxication thresholds
+    -- Uses global constants for progression boundaries
+    
+    -- Determine current intoxication level for different effects
+    local is_medium = intoxication >= glitch_medium_threshold
+    local is_high = intoxication >= glitch_high_threshold
+    
+    -- Base corruption - happens more often at higher levels
+    local base_chance = is_high and 0.6 or (is_medium and 0.4 or 0.2)
+    if rnd(1) < intensity * base_chance then
+        local pixel_count = flr(intensity * (is_high and 20 or (is_medium and 15 or 8))) + 2
+        for i = 1, pixel_count do
             local x = flr(rnd(128))
             local y = flr(rnd(128))
-            local color = flr(rnd(16))
+            
+            -- Prefer bright, noticeable colors for drunk effect
+            local bright_colors = {7, 10, 9, 8, 12, 14, 15}
+            local color = bright_colors[flr(rnd(#bright_colors)) + 1]
+            
+            pset(x, y, color)
+        end
+    end
+    
+    -- Additional chaotic corruption only at high threshold
+    if is_high and rnd(1) < 0.3 then
+        for i = 1, flr(intensity * 12) do
+            local x = flr(rnd(128))
+            local y = flr(rnd(128))
+            local color = flr(rnd(16)) -- Any random color for chaos
             pset(x, y, color)
         end
     end
@@ -1102,38 +1129,27 @@ function glitch_reset_effects()
 end
 
 function before_draw_game()
-    -- -- Calculate glitch intensity based on intoxication level
-    -- local glitch_intensity = 0
-    -- if intoxication > glitch_intoxication_threshold then
-    --     glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
-    -- end
+    -- No pre-draw glitch effects for intoxication
+    -- Other glitch effects can be called manually for specific events
     
-    -- -- Apply pre-draw glitch effects
-    -- if glitch_intensity > 0 then
-    --     glitch_screen_shake(glitch_intensity)
-    --     glitch_palette_corruption(glitch_intensity)
-    -- end
-
     if shaking_timer > 0 then
-        -- Apply screen shake effect
+        -- Apply screen shake effect for specific events
         glitch_screen_shake(1.0)
     end
 end
 
 
 function after_draw_game()
-    -- -- Calculate glitch intensity based on intoxication level
-    -- local glitch_intensity = 0
-    -- if intoxication > glitch_intoxication_threshold then
-    --     glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
-    -- end
+    -- Calculate glitch intensity based on intoxication level
+    local glitch_intensity = 0
+    if intoxication > glitch_intoxication_threshold then
+        glitch_intensity = min(1, (intoxication - glitch_intoxication_threshold) / (glitch_max_intensity - glitch_intoxication_threshold))
+    end
     
-    -- -- Apply post-draw glitch effects
-    -- if glitch_intensity > 0 then
-    --     glitch_scanlines(glitch_intensity)
-    --     glitch_pixel_corruption(glitch_intensity)
-    --     glitch_screen_inversion(glitch_intensity)
-    -- end
+    -- Apply post-draw glitch effects
+    if glitch_intensity > 0 then
+        glitch_pixel_corruption(glitch_intensity)
+    end
     
 
 
