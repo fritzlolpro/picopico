@@ -26,6 +26,11 @@ sobering_frequency = 1 -- How often sobering occurs in seconds
 tolerance_factor = 0.0015 -- Alcohol effectiveness decrease over time (-0.15% effectiveness each second)
 drinking_frequency = 5 -- How often character drinks a shot in seconds
 
+-- Consumption progression constants
+liver_damage_per_consumption = 0.01 -- Liver damage increase per consumption (1% per drink)
+intoxication_penalty_per_consecutive = 0.05 -- Intoxication effectiveness penalty per consecutive drink (5% per drink)
+min_intoxication_effectiveness = 0.2 -- Minimum intoxication effectiveness (20%)
+
 -- Game variables (initialized in init_game_state())
 money = nil
 liver_health = nil
@@ -588,7 +593,7 @@ function consume_drink(drink)
     last_drink_index = selected_drink_index
 
     -- Apply progression formulas
-    local effective_intoxication = calculate_effective_intoxication(drink.intoxication)
+    local effective_intoxication = calculate_effective_intoxication(drink)
     local effective_liver_damage = calculate_effective_liver_damage(drink)
 
     -- Apply effects
@@ -605,10 +610,18 @@ function consume_drink(drink)
 end
 
 -- Alcohol tolerance formula
-function calculate_effective_intoxication(base_intoxication)
+function calculate_effective_intoxication(drink)
+    local base_intoxication = drink.intoxication
+    local consecutive_consumed = drink.consecutive_consumed
+    
     local effectiveness = 1 - (tolerance_factor * total_seconds)
     -- -0.15% effectiveness each second
-    local final_intoxication = base_intoxication * effectiveness
+    
+    -- Reduce effectiveness for consecutive consumption of the same drink
+    local consecutive_penalty = 1 - ((consecutive_consumed - 1) * intoxication_penalty_per_consecutive)
+    consecutive_penalty = max(consecutive_penalty, min_intoxication_effectiveness)
+    
+    local final_intoxication = base_intoxication * effectiveness * consecutive_penalty
 
     -- Apply drinking efficiency bonus if active
     if drinking_efficiency_timer > 0 then
@@ -631,8 +644,8 @@ function calculate_effective_liver_damage(drink)
     local damage_multiplier = 1 + (liver_damage_factor * total_seconds)
     -- +0.1833% damage each second
     
-    -- Add 1% damage increase for each time this specific drink was consumed
-    local consumption_multiplier = 1 + (total_consumed * 0.01)
+    -- Add damage increase for each time this specific drink was consumed
+    local consumption_multiplier = 1 + (total_consumed * liver_damage_per_consumption)
     
     local final_damage = base_damage * damage_multiplier * consumption_multiplier
 
