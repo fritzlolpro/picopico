@@ -200,8 +200,8 @@ drinks = {
         price = 29,
         intoxication = 65,
         liver_damage = 3,
-        effect_chance = 0.20,
-        -- effect_chance = 1,
+        -- effect_chance = 0.20,
+        effect_chance = 1,
         effect_func = beer_effect,
         total_consumed = 0,
         consecutive_consumed = 0
@@ -878,7 +878,7 @@ toilet_target_time = 2 * 60 -- Target time to hit toilet in frames (2 seconds)
 toilet_vel_x = nil
 toilet_vel_y = nil
 toilet_speed = 0.8 -- Base toilet movement speed (constant)
-minigame_game_length = 10 * 60 -- Total mini-game length: 10 seconds in frames (constant)
+minigame_game_length = 15 * 60 -- Total mini-game length: 15 seconds in frames (constant)
 
 function update_minigame()
     if minigame_timer == 0 then
@@ -1430,9 +1430,21 @@ end
 
 function after_draw_minigame()
     
+    glitch_palette_corruption(0.5) -- Apply palette corruption effect
+    glitch_scanlines(0.5) -- Apply scanlines effect
+    glitch_pixel_corruption(0.5) -- Apply pixel corruption effect
+    glitch_screen_inversion(0.5) -- Apply screen inversion effect
+
+
+    glitch_reset_effects() -- Reset camera and palette after mini-game drawing
+end
+
+function before_draw_minigame()
+    glitch_screen_shake(1) -- Apply screen shake effect
 end
 
 function draw_minigame()
+    before_draw_minigame()
     cls(1)
     print("bathroom emergency!", 20, 5, 7)
     print("hit toilet for " .. flr(toilet_target_time/60) .. " seconds!", 15, 15, 8)
@@ -1467,6 +1479,7 @@ function draw_minigame()
        (stream_y - stream_length) <= toilet_y + toilet_size * 8 and stream_y >= toilet_y then
         print("hit!", toilet_x, toilet_y - 8, 8)
     end
+    after_draw_minigame()
 end
 
 -- Functions for displaying intoxication state
