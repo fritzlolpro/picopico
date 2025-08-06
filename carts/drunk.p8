@@ -463,6 +463,7 @@ function _update60()
     end
 
     -- Update time
+   
     update_time()
 
     if current_state == game_state.main_menu then
@@ -484,7 +485,7 @@ total_seconds = nil
 
 function update_time()
     -- Don't update time during payday
-    if current_state == game_state.payday then
+    if current_state == game_state.payday or current_state == game_state.minigame or current_state == game_state.game_over then
         return
     end
     
@@ -505,7 +506,7 @@ function update_time()
         
 
         -- Apply sobering (not affected by slowmotion, blocked during blackout and minigame)
-        if total_seconds % sobering_frequency == 0 and blackout_timer <= 0 and current_state ~= game_state.minigame then
+        if total_seconds % sobering_frequency == 0 and blackout_timer <= 0 and current_state != game_state.minigame then
             update_sobering()
         end
         -- Salary every SALARY_FREQUENCY seconds (not affected by slowmotion)
