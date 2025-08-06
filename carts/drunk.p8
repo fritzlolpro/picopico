@@ -1619,7 +1619,7 @@ function draw_game_over()
     -- Display the reason stored in game_over_reason
     if game_over_reason != "" then
         if game_over_reason == lost_reason.too_sober then
-            cls(11)
+            cls(15)
             print("you are too sober", 10, 20, 1)
             print("to carry the burden of life", 10, 30, 1)
             spr(100, 10, 40, 2, 2)
