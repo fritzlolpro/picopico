@@ -1078,11 +1078,23 @@ function _draw()
 end
 
 function draw_menu()
+
+    print("fritzlolpro", 6, 4, 10)
+    print("■■■■  ■■■■■ ■   ■ ■   ■ ■   ■", 6, 11, 2)
+    print("■   ■ ■   ■ ■   ■ ■■  ■ ■  ■ ", 6, 15, 2)
+    print("■   ■ ■■■■■ ■   ■ ■ ■ ■ ■■■  ", 6, 19, 2)
+    print("■   ■ ■ ■   ■   ■ ■  ■■ ■  ■ ", 6, 23, 2)
+    print("■■■■■ ■  ■  ■■■■■ ■   ■ ■   ■", 6, 27, 2)
+
     print("■■■■  ■■■■■ ■   ■ ■   ■ ■   ■", 5, 10, 8)
     print("■   ■ ■   ■ ■   ■ ■■  ■ ■  ■ ", 5, 14, 8)
     print("■   ■ ■■■■■ ■   ■ ■ ■ ■ ■■■  ", 5, 18, 8)
     print("■   ■ ■ ■   ■   ■ ■  ■■ ■  ■ ", 5, 22, 8)
     print("■■■■■ ■  ■  ■■■■■ ■   ■ ■   ■", 5, 26, 8)
+
+    spr(4, 8, 37, 7,1)
+
+    print("you will drink every " .. drinking_frequency .. " sec", 10, 49, 6)
 
     print("survive 360 seconds", 10, 94-6*4, 6)
     print("keep optimal drunk level", 10, 94-6*3, 5)
