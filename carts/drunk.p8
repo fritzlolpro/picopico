@@ -1615,16 +1615,22 @@ end
 
 function draw_game_over()
     cls(8)
-    print("you died", 10, 50, 2)
+    print("you died", 10, 10, 2)
 
     -- Display the reason stored in game_over_reason
     if game_over_reason != "" then
         if lost_reason == lost_reason.too_sober then
             cls(10)
-            print("you are too sober", 10, 60, 1)
-            print("to carry the burden of life", 10, 70, 1)
+            print("you are too sober", 10, 20, 1)
+            print("to carry the burden of life", 10, 30, 1)
+            spr(100, 10, 40, 2, 2)
+            print("try alcohol", 10, 50, 1)
+            spr(4, 10, 60, 7, 1)
         elseif lost_reason == lost_reason.liver_failure then
-            print("liver is dead", 10, 60, 6)
+            cls(5)
+            print("liver is dead", 10, 20, 7)
+            print("your insurance wont cover anything", 10, 30, 7)
+            spr(24, 10, 40, 2, 2)
     end
     -- ⬇️⬆️➡️⬅️🅾️❎
     print("press ❎ to restart", 10, 85, 6)
