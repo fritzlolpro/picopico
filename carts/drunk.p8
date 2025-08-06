@@ -12,6 +12,11 @@ game_state = {
     game_over = 4,
     win = 5
 }
+
+lost_reason = {
+    too_sober = 0,
+    liver_failure = 1
+}
 -- ⬇️⬆️➡️⬅️🅾️❎
 -- Game constants
 game_duration = 360 -- Total game duration in seconds
@@ -237,7 +242,7 @@ function init_game_state()
     intoxication = 230
     selected_drink_index = 1
     selected_bonus_index = 1
-    game_over_reason = ""
+    game_over_reason = nil
     last_drink_index = nil -- Track last consumed drink for consecutive counting
     
     -- Time tracking
@@ -443,7 +448,7 @@ function _update60()
         if sobriety_timer >= sobriety_duration then
             -- Game over - too sober
             change_state(game_state.game_over)
-            game_over_reason = "sobriety is a sin"
+            game_over_reason = lost_reason.too_sober
         end
     else
         -- Reset timer when not too sober
@@ -721,7 +726,7 @@ function check_game_conditions()
     if liver_health <= 0 then
         -- Instant game over on liver failure
         change_state(game_state.game_over)
-        game_over_reason = "liver is dead"
+        game_over_reason = lost_reason.liver_failure
     elseif total_seconds >= game_duration then
         -- 360 seconds passed - victory
         change_state(game_state.win)
@@ -1614,7 +1619,12 @@ function draw_game_over()
 
     -- Display the reason stored in game_over_reason
     if game_over_reason != "" then
-        print(game_over_reason, 10, 65, 7)
+        if lost_reason == lost_reason.too_sober then
+            cls(10)
+            print("you are too sober", 10, 60, 1)
+            print("to carry the burden of life", 10, 70, 1)
+        elseif lost_reason == lost_reason.liver_failure then
+            print("liver is dead", 10, 60, 6)
     end
     -- ⬇️⬆️➡️⬅️🅾️❎
     print("press ❎ to restart", 10, 85, 6)
