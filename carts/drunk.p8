@@ -485,7 +485,7 @@ total_seconds = nil
 
 function update_time()
     -- Don't update time during payday
-    if current_state == game_state.payday or current_state == game_state.minigame or current_state == game_state.game_over then
+    if current_state != game_state.playing then
         return
     end
     
@@ -1078,26 +1078,17 @@ function _draw()
 end
 
 function draw_menu()
-    print("drunk simulator", 10, 10, 7)
-    print("survive 360 seconds", 10, 20, 6)
-    print("keep optimal drunk level", 10, 30, 5)
-    print("avoid being too sober", 10, 40, 8)
-    print("avoid being too drunk", 10, 50, 8)
-    print("dont kill your liver", 10, 60, 8)
-
-    -- draw liver
-    local liver_x_pixel = 32
-    local liver_y_pixel = 8
-
-    -- Convert pixel coordinates to sprite ID (PICO-8 uses 8x8 tiles)
-    local sprite_id = (liver_x_pixel / 8) + (liver_y_pixel / 8) * 16
-
-    -- Draw the 16x16 drink sprite (2x2 tiles)
-    spr(sprite_id, 10, 65, 2, 2)
+    
+    print("survive 360 seconds", 10, 94-6*4, 6)
+    print("keep optimal drunk level", 10, 94-6*3, 5)
+    print("avoid being too sober", 10, 94-6*2, 8)
+    print("avoid being too drunk", 10, 94-6, 8)
+    print("dont kill your liver", 10, 94, 8)
+ 
     -- ⬇️⬆️➡️⬅️🅾️❎
-    print("⬇️⬆️➡️⬅️ select drink", 10, 85, 6)
-    print("❎ interact", 10, 95, 6)
-    print("press ❎ to start", 10, 115, 12)
+    print("⬇️⬆️➡️⬅️ select drink", 10, 104, 6)
+    print("❎ interact", 10, 110, 6)
+    print("press ❎ to start", 10, 120, 12)
 end
 
 -- Individual glitch effect functions (call during draw phase)
