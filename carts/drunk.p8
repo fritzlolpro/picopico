@@ -823,6 +823,8 @@ function update_game()
 
     -- Handle drink selection
     handle_drink_selection()
+
+  
 end
 
 -- Drink selection handling function
@@ -849,20 +851,31 @@ function handle_drink_selection()
     if shaking_timer > 0 and rnd(1) < 0.3 then
         if rnd(1) < 0.5 then
             selected_drink_index = max(1, selected_drink_index - 1)
+            on_drink_selection()
         else
             selected_drink_index = min(#drinks, selected_drink_index + 1)
+            on_drink_selection()
         end
 
     -- Normal controls
     elseif left_pressed then
         selected_drink_index = max(1, selected_drink_index - 1)
+        on_drink_selection()
     elseif right_pressed then
         selected_drink_index = min(#drinks, selected_drink_index + 1)
+        on_drink_selection()
     elseif up_pressed then
         selected_drink_index = max(1, selected_drink_index - 4)
+        on_drink_selection()
     elseif bottom_pressed then
         selected_drink_index = min(#drinks, selected_drink_index + 4)
+        on_drink_selection()
     end
+   
+end
+
+function on_drink_selection()
+    sfx(5)
 end
 
 -- Mini-game variables (initialized in init_game_state())
