@@ -1078,7 +1078,12 @@ function _draw()
 end
 
 function draw_menu()
-    
+    print("■■■■  ■■■■■ ■   ■ ■   ■ ■   ■", 5, 10, 8)
+    print("■   ■ ■   ■ ■   ■ ■■  ■ ■  ■ ", 5, 14, 8)
+    print("■   ■ ■■■■■ ■   ■ ■ ■ ■ ■■■  ", 5, 18, 8)
+    print("■   ■ ■ ■   ■   ■ ■  ■■ ■  ■ ", 5, 22, 8)
+    print("■■■■■ ■  ■  ■■■■■ ■   ■ ■   ■", 5, 26, 8)
+
     print("survive 360 seconds", 10, 94-6*4, 6)
     print("keep optimal drunk level", 10, 94-6*3, 5)
     print("avoid being too sober", 10, 94-6*2, 8)
